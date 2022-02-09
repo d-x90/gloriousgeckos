@@ -3,10 +3,8 @@ const mapper = {};
 mapper.mapUserToUserDto = (user) => {
     return {
         id: user.id,
-        email: user.email,
+        wallet: user.wallet,
         username: user.username,
-        lastName: user.lastName,
-        firstName: user.firstName,
         role: user.role,
         createdAt: user.createdAt,
     };

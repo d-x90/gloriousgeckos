@@ -8,21 +8,21 @@ const bcrypt = require('bcrypt');
 
 describe('auth-service-test', () => {
     describe('login', () => {
-        const usernameOrEmail = 'example@email.com';
+        const usernameOrWallet = 'username';
         const password = 'password';
 
         it('should fail if user not found', async () => {
             // Arrange
-            stub(userService, 'getUserByUsernameOrEmail').resolves(null);
+            stub(userService, 'getUserByUsernameOrWallet').resolves(null);
             try {
                 // Act
-                await authService.login(usernameOrEmail, password);
+                await authService.login(usernameOrWallet, password);
             } catch (err) {
                 // Assert
                 expect(err).to.be.an('error');
             } finally {
                 // CleanUp
-                userService.getUserByUsernameOrEmail.restore();
+                userService.getUserByUsernameOrWallet.restore();
             }
         });
 
@@ -31,7 +31,7 @@ describe('auth-service-test', () => {
             stub(bcrypt, 'compare').resolves(false);
             try {
                 // Act
-                await authService.login(usernameOrEmail, password);
+                await authService.login(usernameOrWallet, password);
             } catch (err) {
                 // Assert
                 expect(err).to.be.an('error');
@@ -43,23 +43,23 @@ describe('auth-service-test', () => {
 
         it('should return token if credentials are correct', async () => {
             // Arrange
-            stub(userService, 'getUserByUsernameOrEmail').resolves({
+            stub(userService, 'getUserByUsernameOrWallet').resolves({
                 id: 'userId',
-                email: usernameOrEmail,
+                wallet: usernameOrWallet,
             });
             stub(bcrypt, 'compare').resolves(true);
 
             try {
                 // Act
                 const token = await authService.login(
-                    usernameOrEmail,
+                    usernameOrWallet,
                     password
                 );
                 //Assert
                 expect(token).to.be.not.null;
             } finally {
                 // CleanUp
-                userService.getUserByUsernameOrEmail.restore();
+                userService.getUserByUsernameOrWallet.restore();
                 bcrypt.compare.restore();
             }
         });

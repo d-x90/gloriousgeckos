@@ -13,20 +13,20 @@ userService.getUserById = (userId) => {
     return User.findByPk(userId);
 };
 
-userService.getUserByEmail = (email) => {
-    return User.findOne({ where: { email } });
+userService.getUserByWallet = (wallet) => {
+    return User.findOne({ where: { wallet } });
 };
 
 userService.getUserByUsername = (username) => {
     return User.findOne({ where: { username } });
 };
 
-userService.getUserByUsernameOrEmail = (usernameOrEmail) => {
+userService.getUserByUsernameOrWallet = (usernameOrWallet) => {
     return User.findOne({
         where: {
             [Op.or]: {
-                username: usernameOrEmail,
-                email: usernameOrEmail,
+                username: usernameOrWallet,
+                wallet: usernameOrWallet,
             },
         },
     });
@@ -106,10 +106,10 @@ userService.deleteUser = (userId) => {
     });
 };
 
-userService.checkIfUserExistsByEmail = async (email) => {
+userService.checkIfUserExistsByWallet = async (wallet) => {
     const count = await User.count({
         where: {
-            email,
+            wallet,
         },
     });
 

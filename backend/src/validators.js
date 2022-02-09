@@ -36,9 +36,7 @@ function validateRequest(
 
 validators.validateUserRegistration = (req, res, next) => {
     const schema = Joi.object({
-        firstName: Joi.string().trim(),
-        lastName: Joi.string().trim(),
-        email: Joi.string().trim().email().required(),
+        wallet: Joi.string().trim().required(),
         username: Joi.string().trim().required(),
         password: Joi.string().trim().min(PASSWORD_MIN_LENGTH).required(),
         confirmPassword: Joi.string()
@@ -55,7 +53,7 @@ validators.validateUserRegistration = (req, res, next) => {
 
 validators.validateUserLogin = (req, res, next) => {
     const schema = Joi.object({
-        usernameOrEmail: Joi.string().trim().required(),
+        usernameOrWallet: Joi.string().trim().required(),
         password: Joi.string().trim().required(),
     });
 
