@@ -37,6 +37,7 @@ function validateRequest(
 validators.validateUserRegistration = (req, res, next) => {
     const schema = Joi.object({
         wallet: Joi.string().trim().required(),
+        signature: Joi.string().trim().required(),
         username: Joi.string().trim().required(),
         password: Joi.string().trim().min(PASSWORD_MIN_LENGTH).required(),
         confirmPassword: Joi.string()

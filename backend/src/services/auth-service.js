@@ -24,8 +24,8 @@ const createJwtForUser = (user) => {
 };
 
 authService.register = async (newUser) => {
-    if(!(await solService.checkIfWalletExists(newUser.wallet))) {
-        const message = `Wallet: '${newUser.wallet}' does not exist on solana`;
+    if (!(await solService.verifyWallet(newUser.wallet, newUser.signature))) {
+        const message = `User: '${newUser.username}' could not verify ownership for wallet: '${newUser.wallet}'`;
         logger.info(message);
         throw new Error(message);
     }
