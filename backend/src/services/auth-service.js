@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const userService = require('./user-service');
-const solService = require('./sol-service');
+const solanaService = require('./solana-service');
 const logger = require('../logger-factory').get('auth-service');
 const bcrypt = require('bcrypt');
 
@@ -10,7 +10,6 @@ const { JWT_SIGN_KEY, JWT_EXPIRATION } = require('../config');
 
 const createJwtForUser = (user) => {
     const payload = {
-        id: user.id,
         username: user.username,
         wallet: user.wallet,
         role: user.role,
@@ -24,7 +23,9 @@ const createJwtForUser = (user) => {
 };
 
 authService.register = async (newUser) => {
-    if (!(await solService.verifyWallet(newUser.wallet, newUser.signature))) {
+    if (
+        !(await solanaService.verifyWallet(newUser.wallet, newUser.signature))
+    ) {
         const message = `User: '${newUser.username}' could not verify ownership for wallet: '${newUser.wallet}'`;
         logger.info(message);
         throw new Error(message);
@@ -46,7 +47,9 @@ authService.register = async (newUser) => {
 
     const savedUser = await userService.createUser(newUser);
     const token = createJwtForUser(savedUser);
-    const refreshToken = await userService.updateRefreshToken(savedUser.id);
+    const refreshToken = await userService.updateRefreshToken(
+        savedUser.username
+    );
 
     logger.info(`User with wallet '${savedUser.wallet}' created successfully.`);
 
@@ -63,7 +66,9 @@ authService.login = async (usernameOrWallet, password) => {
 
     if (await bcrypt.compare(password, user.password)) {
         const token = createJwtForUser(user);
-        const refreshToken = await userService.updateRefreshToken(user.id);
+        const refreshToken = await userService.updateRefreshToken(
+            user.username
+        );
         logger.info(`JWT token created for user '${user.username}'.`);
 
         return { token, refreshToken };
@@ -84,21 +89,21 @@ authService.refreshJwt = async (refreshToken) => {
     }
 
     const token = createJwtForUser(user);
-    const newRefreshToken = await userService.updateRefreshToken(user.id);
+    const newRefreshToken = await userService.updateRefreshToken(user.username);
     logger.info(`JWT token created for user '${user.username}'.`);
 
     return { token, newRefreshToken };
 };
 
-authService.revokeJwt = async (userId) => {
+authService.revokeJwt = async (username) => {
     try {
-        const jwtValidAfter = await userService.revokeJwtForUser(userId);
+        const jwtValidAfter = await userService.revokeJwtForUser(username);
 
         logger.info(
-            `JWT token revoked for user with id: '${userId}' at ${jwtValidAfter}.`
+            `JWT token revoked for user: '${username}' at ${jwtValidAfter}.`
         );
     } catch (e) {
-        logger.error(`JWT revoke failed for user with id: ${userId}`);
+        logger.error(`JWT revoke failed for user: ${username}`);
         throw new Error('JWT revoke failed');
     }
 };

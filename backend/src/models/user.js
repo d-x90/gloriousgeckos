@@ -5,13 +5,8 @@ const { USER_ROLES } = require('../enums');
 const User = sequelize.define(
     'User',
     {
-        id: {
-            primaryKey: true,
-            type: DataTypes.UUIDV4,
-            defaultValue: Sequelize.UUIDV4,
-            allowNull: false,
-        },
         username: {
+            primaryKey: true,
             unique: true,
             type: DataTypes.STRING,
             allowNull: false,
@@ -31,7 +26,7 @@ const User = sequelize.define(
             defaultValue: USER_ROLES.USER,
         },
         refreshToken: {
-            type: DataTypes.UUIDV4,
+            type: DataTypes.UUID,
             allowNull: true,
         },
         jwtValidAfter: {
@@ -46,7 +41,11 @@ const User = sequelize.define(
 );
 
 (async () => {
-    await User.sync({ alter: true });
+    try {
+        await User.sync({ force: false });
+    } catch (error) {
+        console.trace(error);
+    }
 })();
 
 module.exports = User;

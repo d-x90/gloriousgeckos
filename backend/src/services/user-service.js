@@ -9,10 +9,6 @@ userService.createUser = (user) => {
     return User.create(user);
 };
 
-userService.getUserById = (userId) => {
-    return User.findByPk(userId);
-};
-
 userService.getUserByWallet = (wallet) => {
     return User.findOne({ where: { wallet } });
 };
@@ -32,11 +28,11 @@ userService.getUserByUsernameOrWallet = (usernameOrWallet) => {
     });
 };
 
-userService.getJwtValidAfterDateById = async (userId) => {
+userService.getJwtValidAfterDateByUsername = async (username) => {
     const result = await User.findOne({
         attributes: ['jwtValidAfter'],
         where: {
-            id: userId,
+            username: username,
         },
     });
 
@@ -58,19 +54,19 @@ userService.getUserByRefreshToken = (refreshToken) => {
 userService.updateUser = (user) => {
     return User.update(user, {
         where: {
-            id: user.id,
+            username: user.username,
         },
     });
 };
 
-userService.updateRefreshToken = async (userId) => {
+userService.updateRefreshToken = async (username) => {
     const refreshToken = uuid.v4();
 
     await User.update(
         { refreshToken },
         {
             where: {
-                id: userId,
+                username: username,
             },
         }
     );
@@ -78,7 +74,7 @@ userService.updateRefreshToken = async (userId) => {
     return refreshToken;
 };
 
-userService.revokeJwtForUser = async (userId) => {
+userService.revokeJwtForUser = async (username) => {
     const jwtValidAfter = Date.now();
     const refreshToken = uuid.v4();
 
@@ -86,7 +82,7 @@ userService.revokeJwtForUser = async (userId) => {
         { jwtValidAfter, refreshToken },
         {
             where: {
-                id: userId,
+                username: username,
             },
         }
     );
@@ -98,10 +94,10 @@ userService.revokeJwtForUser = async (userId) => {
     return jwtValidAfter;
 };
 
-userService.deleteUser = (userId) => {
+userService.deleteUser = (username) => {
     return User.destroy({
         where: {
-            id: userId,
+            username: username,
         },
     });
 };

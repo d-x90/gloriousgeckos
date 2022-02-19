@@ -61,4 +61,12 @@ validators.validateUserLogin = (req, res, next) => {
     validateRequest(req, res, next, schema);
 };
 
+validators.validateNftVerification = (req, res, next) => {
+    const schema = Joi.object({
+        mint: Joi.string().trim().required(),
+    });
+
+    validateRequest(req, res, next, schema, REQUEST_PAYLOAD_TYPE.PARAMS);
+};
+
 module.exports = validators;

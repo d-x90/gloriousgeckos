@@ -42,8 +42,8 @@ authRoutes.post('/login', validateUserLogin, async (req, res, next) => {
     }
 });
 
-authRoutes.post('/refresh-jwt/:token', async (req, res, next) => {
-    const refreshToken = req.params.token;
+authRoutes.post('/refresh-jwt/:refreshToken', async (req, res, next) => {
+    const refreshToken = req.params.refreshToken;
 
     try {
         const { token, newRefreshToken } = await authService.refreshJwt(
@@ -61,7 +61,7 @@ authRoutes.post('/refresh-jwt/:token', async (req, res, next) => {
 
 authRoutes.post('/revoke-jwt', authenticateJWT, async (req, res, next) => {
     try {
-        await authService.revokeJwt(req.userInfo.id);
+        await authService.revokeJwt(req.userInfo.username);
         res.sendStatus(204);
     } catch (err) {
         next(err);

@@ -4,10 +4,13 @@ const helmet = require('helmet');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+require('./utils').init();
 
 const { PORT, APPLICATION_NAME, CORS_ORIGIN } = require('./config');
 const routes = require('./routes');
 const middlewares = require('./middlewares');
+
+const solanaService = require('./services/solana-service');
 
 const app = express();
 
@@ -18,7 +21,11 @@ app.use(
         }),
     })
 );
-app.use(helmet());
+app.use(
+    helmet({
+        contentSecurityPolicy: { reportOnly: true },
+    })
+);
 app.use(
     cors({
         origin: CORS_ORIGIN,
@@ -28,10 +35,24 @@ app.use(express.json());
 
 app.use('/api', routes);
 
-app.get('/', (req, res) => {
+app.use('/api', middlewares.notFound);
+
+app.use('/testtest', async (req, res) => {
     res.json({
-        message: `${APPLICATION_NAME} api`,
+        response: await solanaService.verifyNftWhitelist(
+            req.query.mint,
+            req.query.wallet
+        ),
     });
+});
+
+app.use(express.static(path.join(__dirname, '..', '..', 'frontend', 'build')));
+app.use(express.static(path.join(__dirname, '..', '..', 'unity')));
+
+app.use((req, res) => {
+    res.sendFile(
+        path.join(__dirname, '..', '..', 'frontend', 'build', 'index.html')
+    );
 });
 
 app.use(middlewares.notFound);

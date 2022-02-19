@@ -44,7 +44,7 @@ describe('auth-service-test', () => {
         it('should return token if credentials are correct', async () => {
             // Arrange
             stub(userService, 'getUserByUsernameOrWallet').resolves({
-                id: 'userId',
+                username: 'username',
                 wallet: usernameOrWallet,
             });
             stub(bcrypt, 'compare').resolves(true);

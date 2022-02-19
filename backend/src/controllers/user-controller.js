@@ -6,7 +6,7 @@ const { mapUserToUserDto } = require('../mapper');
 
 userRoutes.get('/own-user', authenticateJWT, async (req, res, next) => {
     try {
-        const user = await userService.getUserById(req.userInfo.id);
+        const user = await userService.getUserByUsername(req.userInfo.username);
         if (user) {
             return res.json(mapUserToUserDto(user));
         }
@@ -14,7 +14,7 @@ userRoutes.get('/own-user', authenticateJWT, async (req, res, next) => {
         res.status(404);
         next(new Error('User not found'));
     } catch (err) {
-        logger.error(`Couldn't get user with id: '${req.userInfo.id}'`);
+        logger.error(`Couldn't get user: '${req.userInfo.username}'`);
         next(err);
     }
 });
@@ -22,7 +22,7 @@ userRoutes.get('/own-user', authenticateJWT, async (req, res, next) => {
 userRoutes.delete('/own-user', authenticateJWT, async (req, res, next) => {
     try {
         const numberOfUserDeleted = await userService.deleteUser(
-            req.userInfo.id
+            req.userInfo.username
         );
 
         if (numberOfUserDeleted === 1) {
@@ -34,7 +34,7 @@ userRoutes.delete('/own-user', authenticateJWT, async (req, res, next) => {
             next(new Error());
         }
     } catch (err) {
-        logger.error(`Couldn't delete user with id: '${req.userInfo.id}'`);
+        logger.error(`Couldn't delete user: '${req.userInfo.username}'`);
         next(err);
     }
 });

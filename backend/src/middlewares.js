@@ -10,8 +10,8 @@ const getTokenPayload = async (authorizationHeader) => {
 
     const tokenPayload = jwt.verify(token, JWT_SIGN_KEY);
 
-    let jwtValidAfter = await userService.getJwtValidAfterDateById(
-        tokenPayload.id
+    let jwtValidAfter = await userService.getJwtValidAfterDateByUsername(
+        tokenPayload.username
     );
     const issuedAt = Number(tokenPayload.iat);
     jwtValidAfter = Math.floor(jwtValidAfter.getTime() / 1000);

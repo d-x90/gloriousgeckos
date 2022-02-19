@@ -12,7 +12,7 @@ const config = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PASSWORD_MIN_LENGTH: Number(process.env.PASSWORD_MIN_LENGTH) || 4,
     LOGGING_ENABLED: process.env.LOGGING_ENABLED === 'true' ? true : false,
-    SOLANA_NETWORK: process.env.SOLANA_NETWORK || 'devnet'
+    SOLANA_NETWORK_NODE: process.env.SOLANA_NETWORK_NODE || 'devnet',
 };
 
 module.exports = config;
