@@ -13,6 +13,7 @@ const sequelize = new Sequelize(DB_CONNECTION_STRING, {
         idle: 10000,
     },
     logging: DB_LOG_SQL_TO_OUTPUT_ENABLED,
+    dialect: 'postgres',
 });
 
 sequelize

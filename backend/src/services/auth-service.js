@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 const authService = {};
 
 const { JWT_SIGN_KEY, JWT_EXPIRATION } = require('../config');
+const { USER_ROLES } = require('../enums');
+const nftService = require('./nft-service');
 
 const createJwtForUser = (user) => {
     const payload = {
@@ -43,7 +45,12 @@ authService.register = async (newUser) => {
         throw new Error(message);
     }
 
+    const crawledNftsPromise = solanaService.getNfts(newUser.wallet);
+
     newUser.password = await bcrypt.hash(newUser.password, 10);
+
+    // "disable" this feature for now
+    newUser.role = USER_ROLES.USER;
 
     const savedUser = await userService.createUser(newUser);
     const token = createJwtForUser(savedUser);
@@ -51,9 +58,19 @@ authService.register = async (newUser) => {
         savedUser.username
     );
 
+    const crawledNfts = await crawledNftsPromise;
+    const nfts = crawledNfts.map((nft) => ({
+        mint: nft.mint,
+        metaDataUri: nft.uri,
+        symbol: nft.symbol,
+        UserWallet: newUser.wallet,
+    }));
+
+    const usersNfts = await nftService.createManyNft(nfts);
+
     logger.info(`User with wallet '${savedUser.wallet}' created successfully.`);
 
-    return { user: savedUser, token, refreshToken };
+    return { user: savedUser, token, refreshToken, nfts: usersNfts };
 };
 
 authService.login = async (usernameOrWallet, password) => {
@@ -61,7 +78,7 @@ authService.login = async (usernameOrWallet, password) => {
 
     if (!user) {
         logger.info(`User not found. usernameOrWallet: '${usernameOrWallet}'`);
-        throw new Error('User not found');
+        throw new Error('Invalid credentials');
     }
 
     if (await bcrypt.compare(password, user.password)) {

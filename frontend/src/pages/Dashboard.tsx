@@ -1,8 +1,8 @@
-// @ts-nocheck
-
 import { Button, styled } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import NftCard from '../components/NftCard';
+import { useGlobal } from '../contexts/globalContext';
 import useNft from '../requests/authenticated/nfts/useNft';
 
 const StyledDashboard = styled('div')(() => ({
@@ -24,9 +24,10 @@ const StyledNftContainer = styled('section')(() => ({
 }));
 
 const Dashboard = () => {
-  const { isLoading, nfts } = useNft();
+  const { isLoading, nfts, checkIfNftIsUsable, checkForNewNfts } = useNft();
+  const navigate = useNavigate();
 
-  const [selectedNft, selectNft] = useState('');
+  const { selectedNft, selectNft } = useGlobal();
 
   return (
     <StyledDashboard>
@@ -34,15 +35,37 @@ const Dashboard = () => {
         {nfts.map((nft) => (
           <NftCard
             key={nft.mint}
-            onClick={() => selectNft(nft.mint)}
-            isSelected={selectedNft === nft.mint}
+            onClick={() => selectNft(nft)}
+            isSelected={selectedNft?.mint === nft.mint}
             nft={nft}
           />
         ))}
         {isLoading ? 'Loading playable NFTs...' : null}
         {nfts.length === 0 && !isLoading ? 'You have no playable NFT' : null}
       </StyledNftContainer>
-      <Button variant="contained">Play</Button>
+      <div>
+        <Button
+          variant="contained"
+          disabled={!selectedNft}
+          onClick={async () => {
+            if (!selectedNft) {
+              return;
+            }
+            const { isUsable } = await checkIfNftIsUsable(selectedNft?.mint);
+            if (isUsable) {
+              navigate('/game');
+            }
+          }}
+        >
+          Play
+        </Button>
+        <Button variant="outlined" disabled>
+          Revive
+        </Button>
+        <Button variant="outlined" onClick={() => checkForNewNfts()}>
+          I can't see my NFT!
+        </Button>
+      </div>
     </StyledDashboard>
   );
 };

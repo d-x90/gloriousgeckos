@@ -14,6 +14,11 @@ const NFT_WHITELIST = {
     F9xNaaCgUrznEkRABCrsyvVjCvMgnCTniqDRCfAw4h4V: 'GloriousGeckos', // "updateAuthority" field
 };
 
+const ourTokenAccountForGlory = '';
+const ourTokenAccountForDust = '';
+const GLORY_TOKEN_MINT = '';
+const DUST_TOKEN_MINT = '';
+
 const TOKEN_PROGRAM_ID = new PublicKey(
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
 );
@@ -110,49 +115,107 @@ solanaService.verifyNftWhitelist = limitUsageAtOnce(async (mint) => {
     );
 }, RATE_LIMIT_PER_SEC / 2);
 
-// CAUTION: lot of solana api calls..
-solanaService.getNfts = limitUsageAtOnce(async (wallet) => {
-    const accounts = await connection.getParsedProgramAccounts(
-        TOKEN_PROGRAM_ID,
-        {
-            filters: [
-                {
-                    dataSize: 165,
-                },
-                {
-                    memcmp: {
-                        offset: 32,
-                        bytes: wallet,
-                    },
-                },
-            ],
+solanaService.verifyNft = limitUsageAtOnce(async (mint, wallet) => {
+    const isOwner = await solanaService.verifyNftOwnership(mint, wallet);
+    const isUsable = await solanaService.verifyNftWhitelist(mint);
+
+    return isOwner && isUsable;
+}, RATE_LIMIT_PER_SEC / 2);
+
+solanaService.verifyTokenTransfer = limitUsageAtOnce(
+    async (txSignature, wallet) => {
+        const response = await connection.getParsedTransaction(txSignature);
+
+        const senderWallet =
+            response.transaction.message.instructions.parsed.info.authority;
+        const tokenMint =
+            response.transaction.message.instructions.parsed.info.mint;
+        const destinationTokenAccount =
+            response.transaction.message.instructions.parsed.info.destination;
+        const amountSent =
+            response.transaction.message.instructions.parsed.info.tokenAmount
+                .uiAmount;
+
+        let verified = true;
+        let isGlory = tokenMint === GLORY_TOKEN_MINT;
+        let isDust = tokenMint === DUST_TOKEN_MINT;
+        if (senderWallet !== wallet) {
+            verified = false;
         }
-    );
 
-    const nftAddresses = accounts
-        .filter((i) => i.account.data.parsed.info.tokenAmount.amount === '1')
-        .map((i) => i.account.data.parsed.info.mint);
+        if (isGlory) {
+            if (destinationTokenAccount !== ourTokenAccountForGlory) {
+                verified = false;
+            }
+        } else if (isDust) {
+            if (destinationTokenAccount !== ourTokenAccountForDust) {
+                verified = false;
+            }
+        } else {
+            verified = false;
+        }
 
-    const promises = nftAddresses.map(async (address) => {
-        const metadataPDA = await Metadata.getPDA(new PublicKey(address));
-        const tokenMetadata = await Metadata.load(connection, metadataPDA);
-        return tokenMetadata.data;
-    });
+        return { verified, amountSent, isGlory, isDust };
+    },
+    RATE_LIMIT_PER_SEC
+);
 
-    const settledPromises = await Promise.allSettled(promises);
-    const nfts = settledPromises
-        .filter((settledPromise) =>
-            Object.keys(NFT_WHITELIST).includes(
-                settledPromise.value.updateAuthority
+// CAUTION: lot of solana api calls..
+solanaService.getNfts = limitUsageAtOnce(
+    async (wallet, dontCheckTheseMints = []) => {
+        const accounts = await connection.getParsedProgramAccounts(
+            TOKEN_PROGRAM_ID,
+            {
+                filters: [
+                    {
+                        dataSize: 165,
+                    },
+                    {
+                        memcmp: {
+                            offset: 32,
+                            bytes: wallet,
+                        },
+                    },
+                ],
+            }
+        );
+
+        await Promise.waitFor(250);
+
+        const nftAddresses = accounts
+            .filter(
+                (i) => i.account.data.parsed.info.tokenAmount.amount === '1'
             )
-        )
-        .map((settledPromise) => ({
-            mint: settledPromise.value.mint,
-            uri: settledPromise.value.data.uri,
-            symbol: settledPromise.value.data.symbol,
-        }));
+            .map((i) => i.account.data.parsed.info.mint);
 
-    return nfts;
-}, 1);
+        const filteredNftAddresses = nftAddresses.filter(
+            (mint) => !dontCheckTheseMints.includes(mint)
+        );
+
+        const nftResponses = [];
+
+        for (let i = 0; i < filteredNftAddresses.length; i++) {
+            const metadataPDA = await Metadata.getPDA(
+                new PublicKey(filteredNftAddresses[i])
+            );
+            const tokenMetadata = await Metadata.load(connection, metadataPDA);
+            nftResponses.push(tokenMetadata.data);
+            await Promise.waitFor(250);
+        }
+
+        const nfts = nftResponses
+            .filter((nftResponse) =>
+                Object.keys(NFT_WHITELIST).includes(nftResponse.updateAuthority)
+            )
+            .map((nftResponse) => ({
+                mint: nftResponse.mint,
+                uri: nftResponse.data.uri,
+                symbol: nftResponse.data.symbol,
+            }));
+
+        return nfts;
+    },
+    1
+);
 
 module.exports = solanaService;

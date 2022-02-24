@@ -1,20 +1,34 @@
 const User = require('../models/user');
 const { Op } = require('sequelize');
 const uuid = require('uuid');
+const inventoryService = require('./inventory-service');
+const Inventory = require('../models/inventory');
 const logger = require('../logger-factory').get('./user-service.js');
 
 const userService = {};
 
-userService.createUser = (user) => {
-    return User.create(user);
+userService.createUser = async (user) => {
+    const createdUser = await User.create(user);
+
+    const inventory = await inventoryService.createInventory();
+
+    createdUser.setInventory(inventory);
+
+    return createdUser;
 };
 
-userService.getUserByWallet = (wallet) => {
-    return User.findOne({ where: { wallet } });
+userService.getUserByWallet = (wallet, includeInventory = false) => {
+    return User.findOne({
+        where: { wallet },
+        include: includeInventory && Inventory,
+    });
 };
 
-userService.getUserByUsername = (username) => {
-    return User.findOne({ where: { username } });
+userService.getUserByUsername = (username, includeInventory = false) => {
+    return User.findOne({
+        where: { username },
+        include: includeInventory && Inventory,
+    });
 };
 
 userService.getUserByUsernameOrWallet = (usernameOrWallet) => {
@@ -51,10 +65,32 @@ userService.getUserByRefreshToken = (refreshToken) => {
     });
 };
 
-userService.updateUser = (user) => {
+userService.updateUser = (user, wallet) => {
     return User.update(user, {
         where: {
-            username: user.username,
+            wallet,
+        },
+    });
+};
+
+userService.updateGameConfig = (gameConfig, wallet) => {
+    return User.update(
+        { currentGameConfig: gameConfig },
+        {
+            where: {
+                wallet,
+            },
+        }
+    );
+};
+
+userService.getCurrentGameConfig = (userWallet) => {
+    return User.findOne({
+        where: {
+            wallet: userWallet,
+        },
+        attributes: {
+            include: ['currentGameConfig'],
         },
     });
 };

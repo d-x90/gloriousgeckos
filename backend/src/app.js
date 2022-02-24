@@ -5,6 +5,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 require('./utils').init();
+require('./models/associations');
 
 const { PORT, APPLICATION_NAME, CORS_ORIGIN } = require('./config');
 const routes = require('./routes');

@@ -12,10 +12,10 @@ authRoutes.post(
     validateUserRegistration,
     async (req, res, next) => {
         try {
-            const { token, refreshToken } = await authService.register(
+            const { token, refreshToken, nfts } = await authService.register(
                 req.body
             );
-            res.status(200).json({ jwt: token, refreshToken });
+            res.status(200).json({ jwt: token, refreshToken, nfts });
         } catch (err) {
             res.status(400);
             next(err);
@@ -32,12 +32,7 @@ authRoutes.post('/login', validateUserLogin, async (req, res, next) => {
 
         res.json({ jwt: token, refreshToken });
     } catch (err) {
-        if (err.message === 'User not found') {
-            res.status(404);
-        } else {
-            res.status(400);
-        }
-
+        res.status(400);
         next(err);
     }
 });

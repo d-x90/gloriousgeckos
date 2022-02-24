@@ -5,13 +5,13 @@ const { USER_ROLES } = require('../enums');
 const User = sequelize.define(
     'User',
     {
-        username: {
+        wallet: {
             primaryKey: true,
             unique: true,
             type: DataTypes.STRING,
             allowNull: false,
         },
-        wallet: {
+        username: {
             unique: true,
             type: DataTypes.STRING,
             allowNull: false,
@@ -34,18 +34,19 @@ const User = sequelize.define(
             allowNull: false,
             defaultValue: DataTypes.NOW,
         },
+        balance: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        currentGameConfig: {
+            type: DataTypes.JSON,
+            defaultValue: null,
+        },
     },
     {
         freezeTableName: true,
     }
 );
-
-(async () => {
-    try {
-        await User.sync({ force: false });
-    } catch (error) {
-        console.trace(error);
-    }
-})();
 
 module.exports = User;

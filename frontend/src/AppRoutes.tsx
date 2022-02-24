@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './contexts/authContext';
 import Dashboard from './pages/Dashboard';
+import Game from './pages/Game';
 import Login from './pages/login';
 import Register from './pages/register';
 
@@ -10,6 +11,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       {isAuthenticated && <Route path="/" element={<Dashboard />} />}
+      {isAuthenticated && <Route path="/game" element={<Game />} />}
       {isAuthenticated && <Route path="/lootboxes" element={<Lootboxes />} />}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

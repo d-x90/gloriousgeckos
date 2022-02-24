@@ -8,6 +8,7 @@ export const getCleanedUsableNfts = async (wallet: string) => {
   const settledPromises = await Promise.allSettled(
     nfts.map(async (nft) => {
       const { data: nftMetadata } = await axios.get(nft.uri);
+
       return {
         mint: nft.mint,
         symbol: nft.symbol,
@@ -18,15 +19,9 @@ export const getCleanedUsableNfts = async (wallet: string) => {
     })
   );
 
-  return settledPromises.map((settledPromise) =>
-    settledPromise.status === 'fulfilled'
-      ? settledPromise.value
-      : {
-          mint: 'rejected',
-          symbol: '',
-          image: '',
-          name: '',
-          attributes: [],
-        }
+  const unwrappedPromiseValues = settledPromises.map((settledPromise) =>
+    settledPromise.status === 'fulfilled' ? settledPromise.value : null
   );
+
+  return unwrappedPromiseValues.filter((x) => x !== null);
 };

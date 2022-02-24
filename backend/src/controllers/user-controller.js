@@ -6,7 +6,10 @@ const { mapUserToUserDto } = require('../mapper');
 
 userRoutes.get('/own-user', authenticateJWT, async (req, res, next) => {
     try {
-        const user = await userService.getUserByUsername(req.userInfo.username);
+        const user = await userService.getUserByUsername(
+            req.userInfo.username,
+            true
+        );
         if (user) {
             return res.json(mapUserToUserDto(user));
         }
