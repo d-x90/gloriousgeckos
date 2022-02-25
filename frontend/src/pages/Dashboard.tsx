@@ -1,33 +1,58 @@
 import { Button, styled } from '@mui/material';
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import NftCard from '../components/NftCard';
 import { useGlobal } from '../contexts/globalContext';
 import useNft from '../requests/authenticated/nfts/useNft';
+import bgImage from '../assets/images/blurry-gradient-haikei.svg';
 
 const StyledDashboard = styled('div')(() => ({
   width: '100vw',
-  height: '90vh',
+  height: '92vh',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'flex-start',
 }));
 const StyledNftContainer = styled('section')(() => ({
+  backgroundImage: `url(${bgImage})`,
+  backgroundSize: 'cover',
   width: '100%',
-  height: '90%',
+  height: '100%',
   backgroundColor: '#ececec',
   display: 'flex',
   flexDirection: 'row',
   justifyContent: 'flex-start',
   flexWrap: 'wrap',
-  overflow: 'scroll',
+  overflowY: 'scroll',
 }));
 
 const Dashboard = () => {
-  const { isLoading, nfts, checkIfNftIsUsable, checkForNewNfts } = useNft();
+  const { isLoading, nfts, setNfts, checkIfNftIsUsable, checkForNewNfts } =
+    useNft();
   const navigate = useNavigate();
 
   const { selectedNft, selectNft } = useGlobal();
+
+  const startPlaying = async () => {
+    if (!selectedNft) {
+      return;
+    }
+    const { isUsable, removedFromUser } = await checkIfNftIsUsable(
+      selectedNft?.mint
+    );
+    if (isUsable) {
+      navigate('/game');
+    } else {
+      if (removedFromUser) {
+        setNfts((nftsState) =>
+          nftsState.filter((nft) => nft.mint !== selectedNft.mint)
+        );
+      }
+      toast.error(
+        'It seems like you are not the owner of this nft or it cannot be used'
+      );
+    }
+  };
 
   return (
     <StyledDashboard>
@@ -47,15 +72,7 @@ const Dashboard = () => {
         <Button
           variant="contained"
           disabled={!selectedNft}
-          onClick={async () => {
-            if (!selectedNft) {
-              return;
-            }
-            const { isUsable } = await checkIfNftIsUsable(selectedNft?.mint);
-            if (isUsable) {
-              navigate('/game');
-            }
-          }}
+          onClick={startPlaying}
         >
           Play
         </Button>

@@ -66,7 +66,19 @@ authService.register = async (newUser) => {
         UserWallet: newUser.wallet,
     }));
 
-    const usersNfts = await nftService.createManyNft(nfts);
+    const usersNfts = [];
+    for (let i = 0; i < nfts.length; i++) {
+        const existingNft = await nftService.getNft(nfts[i].mint);
+        if (existingNft) {
+            const updatedNft = await nftService.updateNft(
+                { UserWallet: newUser.wallet },
+                nfts[i].mint
+            );
+            usersNfts.push(updatedNft);
+        } else {
+            usersNfts.push(await nftService.createNft(nfts[i]));
+        }
+    }
 
     logger.info(`User with wallet '${savedUser.wallet}' created successfully.`);
 

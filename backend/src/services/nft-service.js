@@ -26,12 +26,15 @@ nftService.getNftsByWallet = (wallet) => {
     return Nft.findAll({ where: { UserWallet: wallet } });
 };
 
-nftService.updateNft = (nft, mint) => {
-    return Nft.update(nft, {
+nftService.updateNft = async (nft, mint) => {
+    const [_, updatedRows] = await Nft.update(nft, {
         where: {
             mint,
         },
+        returning: true,
     });
+
+    return updatedRows[0];
 };
 
 nftService.deleteNft = (mint) => {

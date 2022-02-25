@@ -6,23 +6,28 @@ import 'react-toastify/dist/ReactToastify.css';
 import AppRoutes from './AppRoutes';
 import Navbar from './components/Navbar';
 import { GlobalContextProvider } from './contexts/globalContext';
+import { LoadingContextProvider } from './contexts/loadingContext';
+
+window.alert = console.log;
 
 export default function App() {
   return (
     <SolanaWalletProvider>
       <Router>
-        <AuthContextProvider>
-          <GlobalContextProvider>
-            <Navbar />
-            <AppRoutes />
-            <ToastContainer
-              closeOnClick={false}
-              limit={7}
-              autoClose={7000}
-              position="bottom-right"
-            />
-          </GlobalContextProvider>
-        </AuthContextProvider>
+        <LoadingContextProvider>
+          <AuthContextProvider>
+            <GlobalContextProvider>
+              <Navbar />
+              <AppRoutes />
+              <ToastContainer
+                closeOnClick={false}
+                limit={7}
+                autoClose={7000}
+                position="bottom-right"
+              />
+            </GlobalContextProvider>
+          </AuthContextProvider>
+        </LoadingContextProvider>
       </Router>
     </SolanaWalletProvider>
   );

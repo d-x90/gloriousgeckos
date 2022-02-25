@@ -63,8 +63,20 @@ nftRoutes.post(
                 UserWallet: req.userInfo.wallet,
             }));
 
-            // TODO: don't create if exists just update the owner!
-            const newNfts = await nftService.createManyNft(nfts);
+            const newNfts = [];
+            for (let i = 0; i < nfts.length; i++) {
+                const existingNft = await nftService.getNft(nfts[i].mint);
+                if (existingNft) {
+                    const updatedNft = await nftService.updateNft(
+                        { UserWallet: req.userInfo.wallet },
+                        nfts[i].mint
+                    );
+                    newNfts.push(updatedNft);
+                } else {
+                    newNfts.push(await nftService.createNft(nfts[i]));
+                }
+            }
+
             res.json({ newNfts });
         } catch (err) {
             logger.error(
@@ -81,6 +93,7 @@ nftRoutes.get(
     validateNftVerification,
     async (req, res, next) => {
         try {
+            let storedNft = await nftService.getNft(req.params.mint);
             const isOwner = await solanaService.verifyNftOwnership(
                 req.params.mint,
                 req.userInfo.wallet
@@ -88,7 +101,17 @@ nftRoutes.get(
             const isUsable = await solanaService.verifyNftWhitelist(
                 req.params.mint
             );
-            res.json({ isUsable: isOwner && isUsable });
+            if (storedNft && !isOwner) {
+                storedNft = await nftService.updateNft(
+                    { UserWallet: null },
+                    storedNft.mint
+                );
+            }
+
+            res.json({
+                isUsable: isOwner && isUsable,
+                removedFromUser: storedNft.UserWallet === null,
+            });
         } catch (err) {
             logger.error(
                 `Couldn't get usable nfts for user: '${req.userInfo.username}'`

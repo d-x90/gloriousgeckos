@@ -1,7 +1,6 @@
-import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/authContext';
-import { getCleanedUsableNfts } from '../../../services/nftService';
+import { useLoading } from '../../../contexts/loadingContext';
 import { getNfts, requestCheckForNewNfts, verifyNft } from './nftRequests';
 
 export type Attribute = {
@@ -35,35 +34,49 @@ export type Nft = {
 };
 
 const useNft = () => {
-  const { authenticatedApiCall, userInfo } = useAuth();
   const [nfts, setNfts] = useState<Nft[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { decreaseLoadingCount, increaseLoadingCount } = useLoading();
+  const { authenticatedApiCall, isAuthenticated } = useAuth();
+
   const checkForNewNfts = useCallback(async () => {
+    increaseLoadingCount(1);
     const newNfts = await authenticatedApiCall(requestCheckForNewNfts);
     setNfts([...nfts, ...newNfts]);
-  }, [authenticatedApiCall, nfts]);
+    decreaseLoadingCount(1);
+  }, [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount, nfts]);
 
   const checkIfNftIsUsable = useCallback(
     async (mint: string) => {
-      return await authenticatedApiCall(verifyNft, mint);
+      increaseLoadingCount(1);
+      const response = await authenticatedApiCall(verifyNft, mint);
+      decreaseLoadingCount(1);
+      return response;
     },
-    [authenticatedApiCall]
+    [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
   );
 
   useEffect(() => {
     (async () => {
-      if (userInfo?.wallet) {
+      if (isAuthenticated) {
+        increaseLoadingCount(1);
         const nfts = await authenticatedApiCall(getNfts);
-
         setNfts(nfts);
+        decreaseLoadingCount(1);
         setIsLoading(false);
       }
     })();
-  }, [authenticatedApiCall, userInfo]);
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    increaseLoadingCount,
+    isAuthenticated,
+  ]);
 
   return {
     nfts,
+    setNfts,
     checkIfNftIsUsable,
     isLoading,
     checkForNewNfts,

@@ -89,7 +89,7 @@ export const AuthContextProvider: FC = ({ children }) => {
   const navigate = useNavigate();
 
   const logIn = useCallback(
-    (jwt: string, refreshToken: string) => {
+    async (jwt: string, refreshToken: string) => {
       setIsAuthenticated(true);
       setJwt(jwt);
       setRefreshToken(refreshToken);
@@ -97,7 +97,7 @@ export const AuthContextProvider: FC = ({ children }) => {
 
       navigate('/');
     },
-    [setIsAuthenticated, setJwt, navigate]
+    [navigate]
   );
 
   const logOut = useCallback(() => {

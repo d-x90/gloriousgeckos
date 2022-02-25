@@ -11,15 +11,20 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import { GeneralPageStyle } from '../GeneralStyles';
 import { useNavigate } from 'react-router-dom';
+import bgImage from '../assets/images/blurry-gradient-haikei_2.svg';
+import { useLoading } from '../contexts/loadingContext';
 
 const StyledRegister = styled(GeneralPageStyle)(() => ({
+  backgroundImage: `url(${bgImage})`,
+  backgroundSize: 'cover',
   '&>.panel': {
-    width: '50%',
-    height: '50%',
+    backgroundColor: '#f6f6f6',
+    width: '30vw',
+    height: '35vh',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-around',
-    border: '1px solid black',
+    border: '1px solid rgba(0, 0, 0, 0.23)',
     borderRadius: '5px',
     padding: '20px',
   },
@@ -41,6 +46,8 @@ const Register = () => {
   const [signedMessage, setSignedMessage] = useState<number[]>([]);
 
   const { publicKey: wallet } = useWallet();
+
+  const { decreaseLoadingCount, increaseLoadingCount } = useLoading();
 
   const evaluateForm = useCallback(() => {
     if (!username) {
@@ -71,10 +78,15 @@ const Register = () => {
     return true;
   }, [username, password, passwordAgain, signedMessage, wallet]);
 
+  useEffect(() => {
+    setSignedMessage([]);
+  }, [wallet]);
+
   const onRegisterClick = useCallback(async () => {
     if (!evaluateForm()) {
       return;
     }
+    increaseLoadingCount(1);
 
     try {
       const { jwt, refreshToken } = await register({
@@ -84,19 +96,23 @@ const Register = () => {
         password,
         confirmPassword: passwordAgain,
       });
+      decreaseLoadingCount(1);
 
       logIn(jwt, refreshToken);
     } catch (error) {
+      decreaseLoadingCount(1);
       // @ts-ignore
       toast.error(error.response.data.message);
     }
   }, [
+    increaseLoadingCount,
     evaluateForm,
     wallet,
     signedMessage,
     username,
     password,
     passwordAgain,
+    decreaseLoadingCount,
     logIn,
   ]);
 
@@ -127,6 +143,7 @@ const Register = () => {
           onMessageSigned={(signedMessageParam) =>
             setSignedMessage(signedMessageParam)
           }
+          isSigned={signedMessage.length > 0}
         ></MessageSignerButton>
         <Button variant="contained" onClick={onRegisterClick}>
           Register
