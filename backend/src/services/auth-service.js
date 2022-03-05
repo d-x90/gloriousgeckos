@@ -80,7 +80,9 @@ authService.register = async (newUser) => {
         }
     }
 
-    logger.info(`User with wallet '${savedUser.wallet}' created successfully.`);
+    logger.info(
+        `User '${savedUser.username}' with wallet '${savedUser.wallet}' created successfully.`
+    );
 
     return { user: savedUser, token, refreshToken, nfts: usersNfts };
 };
