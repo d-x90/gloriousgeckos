@@ -243,15 +243,24 @@ solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
         const nftResponses = [];
 
         for (let i = 0; i < filteredNftAddresses.length; i++) {
-            const metadataPDA = await Metadata.getPDA(
-                new PublicKey(filteredNftAddresses[i])
-            );
-            const tokenMetadata = await Metadata.load(
-                connection.connection,
-                metadataPDA
-            );
-            nftResponses.push(tokenMetadata.data);
-            await Promise.waitFor(250);
+            try {
+                const metadataPDA = await Metadata.getPDA(
+                    new PublicKey(filteredNftAddresses[i])
+                );
+                const tokenMetadata = await Metadata.load(
+                    connection.connection,
+                    metadataPDA
+                );
+                nftResponses.push(tokenMetadata.data);
+            } catch (error) {
+                logger.info(
+                    "Tricky non-NFT account with amount of 1: '" +
+                        filteredNftAddresses[i] +
+                        "'"
+                );
+            } finally {
+                await Promise.waitFor(250);
+            }
         }
 
         const nfts = nftResponses
