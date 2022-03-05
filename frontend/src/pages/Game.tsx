@@ -1,14 +1,18 @@
 import { Button, styled } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Unity, { UnityContext } from 'react-unity-webgl';
+import { useAuth } from '../contexts/authContext';
 import { useGlobal } from '../contexts/globalContext';
+import { useLoading } from '../contexts/loadingContext';
+import { endGame, startGame } from '../requests/authenticated/gameRequests';
 
 const unityContext = new UnityContext({
-  loaderUrl: 'Unity_build/Unity_build.loader.js',
-  dataUrl: 'Unity_build/Unity_build.data',
-  frameworkUrl: 'Unity_build/Unity_build.framework.js',
-  codeUrl: 'Unity_build/Unity_build.wasm',
+  loaderUrl: 'Unity_build/Build/Unity_build.loader.js',
+  dataUrl: 'Unity_build/Build/Unity_build.data',
+  frameworkUrl: 'Unity_build/Build/Unity_build.framework.js',
+  codeUrl: 'Unity_build/Build/Unity_build.wasm',
   // @ts-ignore
   webGLContextAttributes: {
     alpha: true,
@@ -37,46 +41,116 @@ const GameContainer = styled('div')(() => ({
 
 const Game = () => {
   const [progression, setProgression] = useState(0);
+  const [hash, setHash] = useState('');
+  const [isGameFinished, setIsGetgameFinished] = useState(false);
 
+  const { increaseLoadingCount, decreaseLoadingCount } = useLoading();
+  const { isAuthenticated, authenticatedApiCall } = useAuth();
   const { selectedNft } = useGlobal();
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    unityContext.on('progress', function (progression) {
-      setProgression(progression);
-    });
+    if (!selectedNft || !isAuthenticated) {
+      return navigate('/');
+    }
 
-    unityContext.on('canvas', (canvas) => {
-      canvas.width = 1000;
-      canvas.height = 700;
-    });
+    (async () => {
+      increaseLoadingCount(1);
+      try {
+        const response = await authenticatedApiCall(
+          startGame,
+          selectedNft.mint
+        );
+        if (response.hash) {
+          setHash(response.hash);
+        } else {
+          toast.error(response.response.data.message);
+        }
+      } catch (error) {
+        // @ts-ignore
+        toast.error('Something went wrong');
+        decreaseLoadingCount(1);
+        navigate('/');
+      }
+      decreaseLoadingCount(1);
+    })();
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    increaseLoadingCount,
+    isAuthenticated,
+    navigate,
+    selectedNft,
+  ]);
 
-    unityContext.on('SceneLoaded', () => {
-      unityContext.send('GameManager', 'StartGame', selectedNft?.image);
-    });
+  useEffect(() => {
+    if (hash && selectedNft) {
+      unityContext.on('progress', function (progression) {
+        setProgression(progression);
+      });
 
-    unityContext.on('GameOver', (success, score) => {
-      console.log({ success, score });
-    });
-  }, [selectedNft?.image]);
+      unityContext.on('canvas', (canvas) => {
+        canvas.width = 1000;
+        canvas.height = 700;
+      });
 
-  if (!selectedNft) {
-    navigate('/');
-  }
+      unityContext.on('SceneLoaded', () => {
+        unityContext.send('GameManager', 'SetHash', hash);
+        unityContext.send(
+          'GameManager',
+          'SetNFTImageThenStart',
+          selectedNft?.image
+        );
+      });
+
+      unityContext.on('GameOver', async (payload, score, didDie) => {
+        increaseLoadingCount(1);
+        try {
+          const response = await authenticatedApiCall(endGame, payload);
+          if (response.isSuccess) {
+            toast.success('Result submitted successfully');
+          } else {
+            toast.error(response.response.data.message);
+          }
+        } catch (error) {
+          // @ts-ignore
+          toast.error('Something went wrong');
+          decreaseLoadingCount(1);
+          navigate('/');
+        }
+        decreaseLoadingCount(1);
+        console.log({ payload, score, didDie: Boolean(didDie) });
+        setIsGetgameFinished(true);
+      });
+    }
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    hash,
+    increaseLoadingCount,
+    navigate,
+    selectedNft,
+  ]);
 
   return (
     <GameContainer>
-      <Unity
-        className="webgl-canvas"
-        unityContext={unityContext}
-        matchWebGLToCanvasSize={true}
-      />
+      {hash ? (
+        <Unity
+          style={{ maxWidth: '1000px', maxHeight: '700px' }}
+          className="webgl-canvas"
+          unityContext={unityContext}
+          matchWebGLToCanvasSize={true}
+        />
+      ) : null}
       {progression < 1 ? (
         <p>Loading...{Math.ceil(progression * 100)}%</p>
       ) : null}
-      <Button variant="contained" onClick={() => navigate('/')}>
-        Back to dashboard
-      </Button>
+      {isGameFinished ? (
+        <Button variant="contained" onClick={() => navigate('/')}>
+          Back to dashboard
+        </Button>
+      ) : null}
     </GameContainer>
   );
 };

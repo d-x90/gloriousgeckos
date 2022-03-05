@@ -11,23 +11,27 @@ const inventoryService = {};
 inventoryService.createInventory = async (userWallet) => {
     return Inventory.create({
         UserWallet: userWallet,
+        revivePotion: 3,
     });
 };
 
-inventoryService.getNft = (mint) => {
-    return Nft.findOne({ where: { mint } });
+inventoryService.getInventoryByWallet = (wallet) => {
+    return Inventory.findOne({ where: { UserWallet: wallet } });
 };
 
-inventoryService.getNftsByWallet = (wallet) => {
-    return Nft.findAll({ where: { UserWallet: wallet } });
+inventoryService.getInventory = (id) => {
+    return Inventory.findOne({ where: { id } });
 };
 
-inventoryService.updateNft = (nft) => {
-    return Nft.update(nft, {
+inventoryService.updateInventory = async (inventory, id) => {
+    const [_, updatedRows] = await Inventory.update(inventory, {
         where: {
-            mint: nft.mint,
+            id,
         },
+        returning: true,
     });
+
+    return updatedRows[0];
 };
 
 inventoryService.deleteNft = (mint) => {

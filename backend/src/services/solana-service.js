@@ -5,10 +5,7 @@ const splToken = require('@solana/spl-token');
 const { SOLANA_NETWORK_NODE } = require('../config');
 const { Metadata } = require('@metaplex-foundation/mpl-token-metadata');
 var nacl = require('tweetnacl');
-const { limitUsageAtOnce } = require('../decorators');
 nacl.util = require('tweetnacl-util');
-
-const RATE_LIMIT_PER_SEC = 10;
 
 const NFT_WHITELIST = {
     F9xNaaCgUrznEkRABCrsyvVjCvMgnCTniqDRCfAw4h4V: 'GloriousGeckos', // "updateAuthority" field
@@ -23,12 +20,31 @@ const TOKEN_PROGRAM_ID = new PublicKey(
     'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
 );
 
+const connectionPool = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => ({
+    isBeingUsed: false,
+    connection: new web3.Connection(
+        //web3.clusterApiUrl('mainnet-beta'),
+        SOLANA_NETWORK_NODE,
+        'confirmed'
+    ),
+}));
+
+function getConnection() {
+    const connection = connectionPool.find((c) => c.isBeingUsed === false);
+    if (connection) {
+        connection.isBeingUsed = true;
+        return connection;
+    }
+
+    return connectionPool[0];
+}
+
 // Connect to cluster
-const connection = new web3.Connection(
-    //web3.clusterApiUrl('mainnet-beta'),
-    SOLANA_NETWORK_NODE,
-    'confirmed'
-);
+// const connection = new web3.Connection(
+//     //web3.clusterApiUrl('mainnet-beta'),
+//     SOLANA_NETWORK_NODE,
+//     'confirmed'
+// );
 
 const solanaService = {};
 /*
@@ -59,72 +75,99 @@ solanaService.verifyWallet = async (wallet, signature) => {
     }
 };
 
-solanaService.getTokenAccounts = limitUsageAtOnce(async (wallet) => {
-    const accounts = await connection.getParsedProgramAccounts(
-        TOKEN_PROGRAM_ID,
-        {
-            filters: [
-                {
-                    dataSize: 165, // number of bytes
-                },
-                {
-                    memcmp: {
-                        offset: 32, // number of bytes
-                        bytes: wallet, // base58 encoded string
+solanaService.getTokenAccounts = async (wallet) => {
+    const connection = getConnection();
+    try {
+        const accounts = await connection.connection.getParsedProgramAccounts(
+            TOKEN_PROGRAM_ID,
+            {
+                filters: [
+                    {
+                        dataSize: 165, // number of bytes
                     },
-                },
-            ],
-        }
-    );
-
-    return accounts;
-}, RATE_LIMIT_PER_SEC);
-
-solanaService.verifyNftOwnership = limitUsageAtOnce(async (mint, wallet) => {
-    const accounts = await connection.getParsedProgramAccounts(
-        TOKEN_PROGRAM_ID,
-        {
-            filters: [
-                {
-                    dataSize: 165,
-                },
-                {
-                    memcmp: {
-                        offset: 32,
-                        bytes: wallet,
+                    {
+                        memcmp: {
+                            offset: 32, // number of bytes
+                            bytes: wallet, // base58 encoded string
+                        },
                     },
-                },
-            ],
-        }
-    );
+                ],
+            }
+        );
 
-    return accounts.some(
-        (tokenAccount) =>
-            tokenAccount.account.data.parsed.info.mint === mint &&
-            tokenAccount.account.data.parsed.info.owner === wallet &&
-            tokenAccount.account.data.parsed.info.tokenAmount.amount === '1'
-    );
-}, RATE_LIMIT_PER_SEC);
+        return accounts;
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
 
-solanaService.verifyNftWhitelist = limitUsageAtOnce(async (mint) => {
-    const metadataPDA = await Metadata.getPDA(new PublicKey(mint));
-    const tokenMetadata = await Metadata.load(connection, metadataPDA);
+solanaService.verifyNftOwnership = async (mint, wallet) => {
+    const connection = getConnection();
+    try {
+        const accounts = await connection.connection.getParsedProgramAccounts(
+            TOKEN_PROGRAM_ID,
+            {
+                filters: [
+                    {
+                        dataSize: 165,
+                    },
+                    {
+                        memcmp: {
+                            offset: 32,
+                            bytes: wallet,
+                        },
+                    },
+                ],
+            }
+        );
 
-    return Object.keys(NFT_WHITELIST).includes(
-        tokenMetadata.data.updateAuthority
-    );
-}, RATE_LIMIT_PER_SEC / 2);
+        return accounts.some(
+            (tokenAccount) =>
+                tokenAccount.account.data.parsed.info.mint === mint &&
+                tokenAccount.account.data.parsed.info.owner === wallet &&
+                tokenAccount.account.data.parsed.info.tokenAmount.amount === '1'
+        );
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
 
-solanaService.verifyNft = limitUsageAtOnce(async (mint, wallet) => {
+solanaService.verifyNftWhitelist = async (mint) => {
+    const connection = getConnection();
+    try {
+        const metadataPDA = await Metadata.getPDA(new PublicKey(mint));
+        const tokenMetadata = await Metadata.load(
+            connection.connection,
+            metadataPDA
+        );
+
+        return Object.keys(NFT_WHITELIST).includes(
+            tokenMetadata.data.updateAuthority
+        );
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
+
+solanaService.verifyNft = async (mint, wallet) => {
     const isOwner = await solanaService.verifyNftOwnership(mint, wallet);
     const isUsable = await solanaService.verifyNftWhitelist(mint);
 
     return isOwner && isUsable;
-}, RATE_LIMIT_PER_SEC / 2);
+};
 
-solanaService.verifyTokenTransfer = limitUsageAtOnce(
-    async (txSignature, wallet) => {
-        const response = await connection.getParsedTransaction(txSignature);
+solanaService.verifyTokenTransfer = async (txSignature, wallet) => {
+    const connection = getConnection();
+    try {
+        const response = await connection.connection.getParsedTransaction(
+            txSignature
+        );
 
         const senderWallet =
             response.transaction.message.instructions.parsed.info.authority;
@@ -156,14 +199,19 @@ solanaService.verifyTokenTransfer = limitUsageAtOnce(
         }
 
         return { verified, amountSent, isGlory, isDust };
-    },
-    RATE_LIMIT_PER_SEC
-);
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
 
 // CAUTION: lot of solana api calls..
-solanaService.getNfts = limitUsageAtOnce(
-    async (wallet, dontCheckTheseMints = []) => {
-        const accounts = await connection.getParsedProgramAccounts(
+solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
+    const connection = getConnection();
+
+    try {
+        const accounts = await connection.connection.getParsedProgramAccounts(
             TOKEN_PROGRAM_ID,
             {
                 filters: [
@@ -198,7 +246,10 @@ solanaService.getNfts = limitUsageAtOnce(
             const metadataPDA = await Metadata.getPDA(
                 new PublicKey(filteredNftAddresses[i])
             );
-            const tokenMetadata = await Metadata.load(connection, metadataPDA);
+            const tokenMetadata = await Metadata.load(
+                connection.connection,
+                metadataPDA
+            );
             nftResponses.push(tokenMetadata.data);
             await Promise.waitFor(250);
         }
@@ -214,8 +265,11 @@ solanaService.getNfts = limitUsageAtOnce(
             }));
 
         return nfts;
-    },
-    1
-);
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
 
 module.exports = solanaService;

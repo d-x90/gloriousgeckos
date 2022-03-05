@@ -112,15 +112,17 @@ export const AuthContextProvider: FC = ({ children }) => {
   const authenticatedApiCall = useCallback(
     async (apiCall, ...params) => {
       try {
+        if (!isAuthenticated) {
+          navigate('/login');
+        }
+
         return await apiCall(...params, jwt);
       } catch (error) {
-        // @ts-ignore
-        console.error(Object.keys(error.response));
         // @ts-ignore
         if (error.response.status !== 403) {
           // @ts-ignore
           toast.error(error.response.message);
-          return null;
+          return error;
         }
 
         try {

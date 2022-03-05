@@ -15,12 +15,26 @@ const StyledNavbar = styled('div')(() => ({
   backgroundColor: '#f6f6f6',
   borderBottom: '1px solid black',
   '&>.links': {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
     '&>*': {
       marginRight: '12px',
       fontWeight: 'bolder',
       fontSize: '18px',
       textDecoration: 'none',
       cursor: 'pointer',
+      color: 'black',
+    },
+  },
+  '&>.stats': {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    '&>*': {
+      marginRight: '12px',
+      fontSize: '18px',
+      color: 'black',
     },
   },
 }));
@@ -33,19 +47,7 @@ const Navbar = () => {
     <StyledNavbar>
       <div className="links">
         {isAuthenticated ? (
-          <>
-            <span onClick={logOut}>Log out</span>
-            {user ? (
-              <div style={{ display: 'flex' }}>
-                <p>
-                  Balance: <em>{user?.balance}</em> $GLORY
-                </p>
-                <p>
-                  Revive Potions: <em>{user?.inventory.revivePotion}</em>
-                </p>
-              </div>
-            ) : null}
-          </>
+          <p onClick={logOut}>Log out</p>
         ) : (
           <>
             <Link to="/login">Login</Link>
@@ -53,6 +55,16 @@ const Navbar = () => {
           </>
         )}
       </div>
+      {user ? (
+        <div className="stats">
+          <p>
+            Balance: <strong>{user.balance} $GLORY</strong>
+          </p>
+          <p>
+            Revive Potions: <strong>{user.inventory.revivePotion}</strong>
+          </p>
+        </div>
+      ) : null}
 
       <WalletMultiButton />
     </StyledNavbar>

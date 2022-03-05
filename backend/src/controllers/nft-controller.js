@@ -5,6 +5,7 @@ const { validateNftVerification } = require('../validators');
 const nftRoutes = require('express').Router();
 const logger = require('../logger-factory').get('nft-controller');
 const rateLimit = require('express-rate-limit');
+const inventoryService = require('../services/inventory-service');
 
 nftRoutes.get('/all', authenticateJWT, async (req, res, next) => {
     try {
@@ -30,6 +31,49 @@ nftRoutes.get('/:mint', async (req, res, next) => {
         res.json(queriedNft);
     } catch (err) {
         logger.error(`Couldn't get nft: '${req.query.mint}'`);
+        next(err);
+    }
+});
+
+nftRoutes.post('/:mint/revive', authenticateJWT, async (req, res, next) => {
+    try {
+        const queriedNft = await nftService.getNft(req.params.mint);
+
+        if (!queriedNft) {
+            res.status(404);
+            throw new Error('Nft not found');
+        }
+
+        if (queriedNft.UserWallet !== req.userInfo.wallet) {
+            res.status(400);
+            throw new Error("It's not your nft");
+        }
+
+        if (!queriedNft.isDead) {
+            res.status(400);
+            throw new Error('Nft is not dead');
+        }
+
+        const inventory = await inventoryService.getInventoryByWallet(
+            req.userInfo.wallet
+        );
+
+        if (inventory.revivePotion === 0) {
+            res.status(400);
+            throw new Error('Not enough revive potion');
+        }
+
+        await inventoryService.updateInventory(
+            { revivePotion: inventory.revivePotion - 1 },
+            inventory.id
+        );
+        await nftService.updateNft({ isDead: false }, queriedNft.mint);
+
+        res.json({ revived: true });
+    } catch (err) {
+        logger.error(
+            `Couldn't revive nft: '${req.params.mint}' for user: '${req.userInfo.username}'`
+        );
         next(err);
     }
 });
@@ -92,8 +136,12 @@ nftRoutes.get(
     authenticateJWT,
     validateNftVerification,
     async (req, res, next) => {
+        // TODO: Check if this is needed at all....
         try {
             let storedNft = await nftService.getNft(req.params.mint);
+            if (!storedNft) {
+                throw new Error('Nft not in db');
+            }
             const isOwner = await solanaService.verifyNftOwnership(
                 req.params.mint,
                 req.userInfo.wallet
@@ -101,7 +149,11 @@ nftRoutes.get(
             const isUsable = await solanaService.verifyNftWhitelist(
                 req.params.mint
             );
-            if (storedNft && !isOwner) {
+            if (
+                storedNft &&
+                storedNft.UserWallet === req.userInfo.wallet &&
+                !isOwner
+            ) {
                 storedNft = await nftService.updateNft(
                     { UserWallet: null },
                     storedNft.mint
@@ -114,7 +166,7 @@ nftRoutes.get(
             });
         } catch (err) {
             logger.error(
-                `Couldn't get usable nfts for user: '${req.userInfo.username}'`
+                `Could not verify nft '${req.params.mint}' for user: '${req.userInfo.username}'`
             );
             next(err);
         }

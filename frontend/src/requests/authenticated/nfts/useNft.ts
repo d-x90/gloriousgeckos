@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/authContext';
 import { useLoading } from '../../../contexts/loadingContext';
-import { getNfts, requestCheckForNewNfts, verifyNft } from './nftRequests';
+import {
+  getNfts,
+  requestCheckForNewNfts,
+  requestReviveNft,
+  verifyNft,
+} from './nftRequests';
 
 export type Attribute = {
   trait_type: string;
@@ -14,7 +19,7 @@ export type NftDto = {
   isDead: boolean;
   score: number;
   dailyLimit: number;
-  cooldownStartedAt: number | null;
+  isOnCooldown: boolean;
   symbol: string | null;
   metaDataUri: string | null;
 };
@@ -25,7 +30,7 @@ export type Nft = {
   isDead: boolean;
   score: number;
   dailyLimit: number;
-  cooldownStartedAt: number | null;
+  isOnCooldown: boolean;
   symbol: string | null;
   metaDataUri: string | null;
   image: string;
@@ -57,6 +62,16 @@ const useNft = () => {
     [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
   );
 
+  const reviveNft = useCallback(
+    async (mint: string) => {
+      increaseLoadingCount(1);
+      const response = await authenticatedApiCall(requestReviveNft, mint);
+      decreaseLoadingCount(1);
+      return response;
+    },
+    [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
+  );
+
   useEffect(() => {
     (async () => {
       if (isAuthenticated) {
@@ -78,6 +93,7 @@ const useNft = () => {
     nfts,
     setNfts,
     checkIfNftIsUsable,
+    reviveNft,
     isLoading,
     checkForNewNfts,
   };

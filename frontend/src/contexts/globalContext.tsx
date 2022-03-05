@@ -1,6 +1,7 @@
 import {
   createContext,
   FC,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -13,14 +14,16 @@ import { useLoading } from './loadingContext';
 
 interface GlobalContextValue {
   selectedNft: Nft | null;
-  selectNft: (nft: Nft) => void;
+  selectNft: (nft: Nft | null) => void;
   user: User | null;
+  refreshUser: () => void;
 }
 
 const DEFAULT_CONTEXT: GlobalContextValue = {
   selectedNft: null,
   selectNft: () => {},
   user: null,
+  refreshUser: () => {},
 };
 
 const GlobalContext = createContext<GlobalContextValue>(DEFAULT_CONTEXT);
@@ -34,11 +37,12 @@ export const GlobalContextProvider: FC = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const { decreaseLoadingCount, increaseLoadingCount } = useLoading();
-  const { isAuthenticated, authenticatedApiCall } = useAuth();
+  const { isAuthenticated, authenticatedApiCall, jwt, refreshToken } =
+    useAuth();
 
   useEffect(() => {
     (async () => {
-      if (isAuthenticated) {
+      if (isAuthenticated && jwt && refreshToken) {
         if (!user) {
           increaseLoadingCount(1);
           setUser(await authenticatedApiCall(getOwnUser));
@@ -53,7 +57,24 @@ export const GlobalContextProvider: FC = ({ children }) => {
     decreaseLoadingCount,
     increaseLoadingCount,
     isAuthenticated,
+    jwt,
+    refreshToken,
     user,
+  ]);
+
+  const refreshUser = useCallback(() => {
+    (async () => {
+      if (isAuthenticated) {
+        increaseLoadingCount(1);
+        setUser(await authenticatedApiCall(getOwnUser));
+        decreaseLoadingCount(1);
+      }
+    })();
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    increaseLoadingCount,
+    isAuthenticated,
   ]);
 
   const contextValue = useMemo(
@@ -61,8 +82,9 @@ export const GlobalContextProvider: FC = ({ children }) => {
       selectedNft,
       selectNft,
       user,
+      refreshUser,
     }),
-    [selectedNft, user]
+    [refreshUser, selectedNft, user]
   );
 
   return (

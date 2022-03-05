@@ -4,3 +4,6 @@ dist
 .env
 *.log
 docker-compose.yml
+frontend
+unity
+postgres-data

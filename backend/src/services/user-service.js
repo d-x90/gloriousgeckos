@@ -65,23 +65,29 @@ userService.getUserByRefreshToken = (refreshToken) => {
     });
 };
 
-userService.updateUser = (user, wallet) => {
-    return User.update(user, {
+userService.updateUser = async (user, wallet) => {
+    const [_, updatedRows] = await User.update(user, {
         where: {
             wallet,
         },
+        returning: true,
     });
+
+    return updatedRows[0];
 };
 
-userService.updateGameConfig = (gameConfig, wallet) => {
-    return User.update(
+userService.updateGameConfig = async (gameConfig, wallet) => {
+    const [_, updatedRows] = await User.update(
         { currentGameConfig: gameConfig },
         {
             where: {
                 wallet,
             },
+            returning: true,
         }
     );
+
+    return updatedRows[0];
 };
 
 userService.getCurrentGameConfig = (userWallet) => {

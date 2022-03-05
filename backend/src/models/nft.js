@@ -22,9 +22,9 @@ const Nft = sequelize.define(
             type: DataTypes.INTEGER,
             defaultValue: 500,
         },
-        cooldownStartedAt: {
-            type: DataTypes.INTEGER,
-            defaultValue: null,
+        isOnCooldown: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
         },
         metaDataUri: {
             type: DataTypes.STRING,

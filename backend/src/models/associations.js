@@ -15,8 +15,10 @@ Transaction.belongsTo(User);
 
 (async () => {
     try {
-        await sequelize.sync({ force: true });
+        await sequelize.sync({ force: false });
     } catch (error) {
         console.trace(error);
     }
 })();
+
+module.exports = { sequelize };

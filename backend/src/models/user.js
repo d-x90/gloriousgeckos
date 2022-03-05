@@ -43,6 +43,11 @@ const User = sequelize.define(
             type: DataTypes.JSON,
             defaultValue: null,
         },
+        redFlagCount: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
     },
     {
         freezeTableName: true,

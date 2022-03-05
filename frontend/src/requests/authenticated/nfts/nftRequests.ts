@@ -15,6 +15,20 @@ export const verifyNft = async (mint: string, jwt: string) => {
   return response.data;
 };
 
+export const requestReviveNft = async (mint: string, jwt: string) => {
+  const response = await axios.post<{ revived: boolean; message?: string }>(
+    `${basePath}/${mint}/revive`,
+    null,
+    {
+      headers: {
+        Authorization: 'Bearer ' + jwt,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 const decorateNfts = async (nfts: NftDto[]) => {
   const decorationPromises = [];
   for (let i = 0; i < nfts.length; i++) {
