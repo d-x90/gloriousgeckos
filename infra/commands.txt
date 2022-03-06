@@ -1,0 +1,6 @@
+# Port forward for db connection
+ssh -L 9999:gloriousgeckos.world:5432 -i .\.config\digitalocean\dx90 root@gloriousgeckos.world
+
+
+# certbot
+https://seanthegeek.net/1035/how-to-configure-a-nginx-reverse-proxy-with-lets-encrypt-certificates/
