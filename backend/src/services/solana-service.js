@@ -9,6 +9,7 @@ nacl.util = require('tweetnacl-util');
 
 const NFT_WHITELIST = {
     F9xNaaCgUrznEkRABCrsyvVjCvMgnCTniqDRCfAw4h4V: 'GloriousGeckos', // "updateAuthority" field
+    AxFuniPo7RaDgPH6Gizf4GZmLQFc4M5ipckeeZfkrPNn: 'DeGods',
 };
 
 const ourTokenAccountForGlory = '';
