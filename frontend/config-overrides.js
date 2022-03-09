@@ -14,6 +14,7 @@ module.exports = {
     config.plugins.push(
       new DefinePlugin({
         process: { env: {} },
+        'process.env.NODE_ENV': 'production',
       })
     );
 

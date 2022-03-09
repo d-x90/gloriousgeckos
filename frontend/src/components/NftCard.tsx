@@ -1,5 +1,12 @@
-import { styled, Tooltip } from '@mui/material';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Card,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  styled,
+  Tooltip,
+} from '@mui/material';
+import { FC, useEffect, useRef, useState } from 'react';
 import { Nft } from '../requests/authenticated/nfts/useNft';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 
@@ -12,17 +19,23 @@ const StyledNftCard = styled('div', {
     flexDirection: 'column',
     alignItems: 'center',
     padding: '20px',
-    '>img': {
-      cursor: 'pointer',
-      border: isSelected ? '6px solid #ffab0c' : '',
-      filter: `drop-shadow(2px 4px 6px black) ${
-        isDead ? 'grayscale(1)' : isOnCooldown ? 'sepia(1)' : ''
-      }`,
+    '&:hover': {
+      transition: 'transform .3s',
+      transform: 'translateY(-3px)',
     },
-    '>p': {
+    img: {
+      border: isSelected ? '6px solid #ffab0c' : '',
+    },
+    p: {
+      fontSize: '22px',
       display: 'flex',
       alignItems: 'center',
       fontWeight: 'bold',
+    },
+    '.MuiCard-root': {
+      filter: `drop-shadow(2px 4px 6px black) ${
+        isDead ? 'grayscale(1)' : isOnCooldown ? 'sepia(1)' : ''
+      }`,
     },
   })
 );
@@ -103,24 +116,32 @@ const NftCard: FC<{ nft: Nft; onClick: any; isSelected: boolean }> = ({
           </>
         }
       >
-        <img
-          onClick={(e) => {
-            e.stopPropagation();
+        <Card sx={{ width: 200, height: 250 }}>
+          <CardActionArea
+            onClick={(e) => {
+              e.stopPropagation();
 
-            if (nft.isOnCooldown) {
-              return;
-            }
-            onClick();
-          }}
-          width={100}
-          height={100}
-          src={nft.image}
-          alt={nft.name}
-        />
+              if (nft.isOnCooldown) {
+                return;
+              }
+
+              onClick();
+            }}
+          >
+            <CardMedia
+              component="img"
+              height="150"
+              image={nft.image}
+              alt={nft.name}
+            />
+            <CardContent>
+              <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
+                {nft.name} {nft.isOnCooldown ? <AccessTimeFilledIcon /> : null}
+              </p>
+            </CardContent>
+          </CardActionArea>
+        </Card>
       </Tooltip>
-      <p style={{ color: 'white' }}>
-        {nft.name} {nft.isOnCooldown ? <AccessTimeFilledIcon /> : null}
-      </p>
     </StyledNftCard>
   );
 };

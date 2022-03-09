@@ -38,15 +38,6 @@ app.use('/api', routes);
 
 app.use('/api', middlewares.notFound);
 
-app.use('/testtest', async (req, res) => {
-    res.json({
-        response: await solanaService.verifyNftWhitelist(
-            req.query.mint,
-            req.query.wallet
-        ),
-    });
-});
-
 app.use(express.static(path.join(__dirname, '..', '..', 'frontend', 'build')));
 app.use(express.static(path.join(__dirname, '..', '..', 'unity')));
 

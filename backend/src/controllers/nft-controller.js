@@ -6,6 +6,8 @@ const nftRoutes = require('express').Router();
 const logger = require('../logger-factory').get('nft-controller');
 const rateLimit = require('express-rate-limit');
 const inventoryService = require('../services/inventory-service');
+const degodsService = require('../services/degods-service');
+const abstractNftService = require('../services/abstract-nft-service');
 
 nftRoutes.get('/all', authenticateJWT, async (req, res, next) => {
     try {
@@ -92,30 +94,38 @@ nftRoutes.post(
     authenticateJWT,
     async (req, res, next) => {
         try {
-            const queriedNfts = await nftService.getNftsByWallet(
-                req.userInfo.wallet
-            );
+            const userWallet = req.userInfo.wallet;
 
-            const crawledNfts = await solanaService.getNfts(
-                req.userInfo.wallet,
+            const queriedNfts = await nftService.getNftsByWallet(userWallet);
+
+            let onChainNfts = await solanaService.getNfts(
+                userWallet,
                 queriedNfts.map((nft) => nft.mint)
             );
-            const nfts = crawledNfts.map((nft) => ({
+            onChainNfts = onChainNfts.map((nft) => ({
                 mint: nft.mint,
                 metaDataUri: nft.uri,
                 symbol: nft.symbol,
-                UserWallet: req.userInfo.wallet,
+                UserWallet: userWallet,
             }));
+
+            const degodsStakedNfts = await degodsService.getStakedNfts(
+                userWallet
+            );
+
+            const nfts = [...onChainNfts, ...degodsStakedNfts];
 
             const newNfts = [];
             for (let i = 0; i < nfts.length; i++) {
                 const existingNft = await nftService.getNft(nfts[i].mint);
                 if (existingNft) {
-                    const updatedNft = await nftService.updateNft(
-                        { UserWallet: req.userInfo.wallet },
-                        nfts[i].mint
-                    );
-                    newNfts.push(updatedNft);
+                    if (existingNft.UserWallet !== userWallet) {
+                        const updatedNft = await nftService.updateNft(
+                            { UserWallet: userWallet },
+                            nfts[i].mint
+                        );
+                        newNfts.push(updatedNft);
+                    }
                 } else {
                     newNfts.push(await nftService.createNft(nfts[i]));
                 }
@@ -142,7 +152,7 @@ nftRoutes.get(
             if (!storedNft) {
                 throw new Error('Nft not in db');
             }
-            const isOwner = await solanaService.verifyNftOwnership(
+            const isOwner = await abstractNftService.verifyNftOwnership(
                 req.params.mint,
                 req.userInfo.wallet
             );

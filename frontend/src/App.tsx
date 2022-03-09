@@ -7,6 +7,7 @@ import AppRoutes from './AppRoutes';
 import Navbar from './components/Navbar';
 import { GlobalContextProvider } from './contexts/globalContext';
 import { LoadingContextProvider } from './contexts/loadingContext';
+import { ModalContextProvider } from './contexts/modalContext';
 
 window.alert = console.log;
 
@@ -15,18 +16,20 @@ export default function App() {
     <SolanaWalletProvider>
       <Router>
         <LoadingContextProvider>
-          <AuthContextProvider>
-            <GlobalContextProvider>
-              <Navbar />
-              <AppRoutes />
-              <ToastContainer
-                closeOnClick={false}
-                limit={7}
-                autoClose={7000}
-                position="bottom-right"
-              />
-            </GlobalContextProvider>
-          </AuthContextProvider>
+          <ModalContextProvider>
+            <AuthContextProvider>
+              <GlobalContextProvider>
+                <Navbar />
+                <AppRoutes />
+                <ToastContainer
+                  closeOnClick={false}
+                  limit={7}
+                  autoClose={7000}
+                  position="bottom-right"
+                />
+              </GlobalContextProvider>
+            </AuthContextProvider>
+          </ModalContextProvider>
         </LoadingContextProvider>
       </Router>
     </SolanaWalletProvider>

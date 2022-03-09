@@ -1,8 +1,14 @@
-import { styled } from '@mui/material';
+import { Button, styled, Tooltip } from '@mui/material';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/authContext';
 import { useGlobal } from '../contexts/globalContext';
+import { useLoading } from '../contexts/loadingContext';
+import { useModal } from '../contexts/modalContext';
+import { buyRevivePotion } from '../requests/authenticated/storeRequests';
+import HomeIcon from '@mui/icons-material/Home';
 
 const StyledNavbar = styled('div')(() => ({
   display: 'flex',
@@ -18,6 +24,7 @@ const StyledNavbar = styled('div')(() => ({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'flex-start',
+    alignItems: 'center',
     '&>*': {
       marginRight: '12px',
       fontWeight: 'bolder',
@@ -40,14 +47,49 @@ const StyledNavbar = styled('div')(() => ({
 }));
 
 const Navbar = () => {
-  const { isAuthenticated, logOut } = useAuth();
-  const { user } = useGlobal();
+  const { isAuthenticated, authenticatedApiCall } = useAuth();
+  const { user, refreshUser } = useGlobal();
+  const { increaseLoadingCount, decreaseLoadingCount } = useLoading();
+  const { showModal } = useModal();
+
+  const handleBuyButtonClick = useCallback(async () => {
+    try {
+      const { isAccepted } = await showModal('Revive potion costs 100 $GLORY!');
+      if (!isAccepted) {
+        return;
+      }
+
+      increaseLoadingCount(1);
+      const response = await authenticatedApiCall(buyRevivePotion);
+      if (response.isSuccess) {
+        toast.success('Purchased 1 revive potion');
+        return refreshUser();
+      }
+
+      toast.error(response.response.data.message);
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      decreaseLoadingCount(1);
+    }
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    increaseLoadingCount,
+    refreshUser,
+  ]);
 
   return (
     <StyledNavbar>
       <div className="links">
         {isAuthenticated ? (
-          <p onClick={logOut}>Log out</p>
+          <>
+            <Link to="/">
+              <Tooltip title="Dashboard" placement="right" arrow>
+                <HomeIcon />
+              </Tooltip>
+            </Link>
+          </>
         ) : (
           <>
             <Link to="/login">Login</Link>
@@ -63,6 +105,13 @@ const Navbar = () => {
           <p>
             Revive Potions: <strong>{user.inventory.revivePotion}</strong>
           </p>
+          <Button
+            style={{ height: '32px', color: 'white' }}
+            variant="contained"
+            onClick={handleBuyButtonClick}
+          >
+            Buy
+          </Button>
         </div>
       ) : null}
 

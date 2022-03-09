@@ -7,6 +7,7 @@ const nftService = require('./nft-service');
 const solanaService = require('./solana-service');
 const userService = require('./user-service');
 const shittyEncryptor = require('./shitty-encyptor');
+const abstractNftService = require('./abstract-nft-service');
 const logger = require('../logger-factory').get('./game-service.js');
 
 const gameService = {};
@@ -30,7 +31,12 @@ gameService.startGame = async ({ nftMint, wallet, config }) => {
         throw new Error('Dead NFTs cannot play');
     }
 
-    if (!solanaService.verifyNftOwnership(nftMint, wallet)) {
+    const isNftOwned = await abstractNftService.verifyNftOwnership(
+        nftMint,
+        wallet
+    );
+
+    if (!isNftOwned) {
         await nftService.updateNft({ UserWallet: null }, nft.mint);
         throw new Error('NFT is not valid');
     }
@@ -85,7 +91,10 @@ gameService.finishGame = async ({ payload, wallet }) => {
         throw new Error('Nft not found');
     }
 
-    const isOwner = await solanaService.verifyNftOwnership(nft.mint, wallet);
+    const isOwner = await abstractNftService.verifyNftOwnership(
+        nft.mint,
+        wallet
+    );
     if (!isOwner) {
         await userService.updateUser(
             { redFlagCount: user.redFlagCount + 1 },

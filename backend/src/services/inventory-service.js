@@ -34,6 +34,17 @@ inventoryService.updateInventory = async (inventory, id) => {
     return updatedRows[0];
 };
 
+inventoryService.updateInventoryByWallet = async (inventory, wallet) => {
+    const [_, updatedRows] = await Inventory.update(inventory, {
+        where: {
+            UserWallet: wallet,
+        },
+        returning: true,
+    });
+
+    return updatedRows[0];
+};
+
 inventoryService.deleteNft = (mint) => {
     return Nft.destroy({
         where: {

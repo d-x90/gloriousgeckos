@@ -68,12 +68,11 @@ const Game = () => {
           toast.error(response.response.data.message);
         }
       } catch (error) {
-        // @ts-ignore
         toast.error('Something went wrong');
-        decreaseLoadingCount(1);
         navigate('/');
+      } finally {
+        decreaseLoadingCount(1);
       }
-      decreaseLoadingCount(1);
     })();
   }, [
     authenticatedApiCall,

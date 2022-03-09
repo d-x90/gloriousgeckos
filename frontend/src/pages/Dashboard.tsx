@@ -1,4 +1,4 @@
-import { Button, styled } from '@mui/material';
+import { Button, styled, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import NftCard from '../components/NftCard';
@@ -7,6 +7,9 @@ import useNft from '../requests/authenticated/nfts/useNft';
 import bgImage from '../assets/images/blurry-gradient-haikei.svg';
 import { AxiosError } from 'axios';
 import { useEffect } from 'react';
+import { useModal } from '../contexts/modalContext';
+import { useAuth } from '../contexts/authContext';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const StyledDashboard = styled('div')(() => ({
   width: '100vw',
@@ -50,6 +53,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const { selectedNft, selectNft, refreshUser } = useGlobal();
+  const { logOut } = useAuth();
+
+  const { showModal } = useModal();
 
   useEffect(() => {
     refreshUser();
@@ -61,23 +67,6 @@ const Dashboard = () => {
     }
 
     return navigate('/game');
-
-    // TODO
-    // const { isUsable, removedFromUser } = await checkIfNftIsUsable(
-    //   selectedNft?.mint
-    // );
-    // if (isUsable) {
-    //   navigate('/game');
-    // } else {
-    //   if (removedFromUser) {
-    //     setNfts((nftsState) =>
-    //       nftsState.filter((nft) => nft.mint !== selectedNft.mint)
-    //     );
-    //   }
-    //   toast.error(
-    //     'It seems like you are not the owner of this nft or it cannot be used'
-    //   );
-    // }
   };
 
   return (
@@ -110,6 +99,14 @@ const Dashboard = () => {
               return;
             }
 
+            const { isAccepted } = await showModal(
+              'Reviving an NFT costs 1 revive potion!'
+            );
+
+            if (!isAccepted) {
+              return;
+            }
+
             try {
               const response = await reviveNft(selectedNft.mint);
               if (response.revived) {
@@ -138,6 +135,25 @@ const Dashboard = () => {
         <Button variant="outlined" onClick={() => checkForNewNfts()}>
           I can't see my NFT!
         </Button>
+
+        <Tooltip arrow placement="left" title="Log out">
+          <p
+            style={{
+              position: 'absolute',
+              right: 0,
+              marginRight: '12px',
+              fontWeight: 'bolder',
+              fontSize: '18px',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              color: 'black',
+            }}
+            className="logout-btn"
+            onClick={logOut}
+          >
+            <LogoutIcon />
+          </p>
+        </Tooltip>
       </div>
     </StyledDashboard>
   );

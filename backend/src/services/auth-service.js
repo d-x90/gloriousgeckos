@@ -9,6 +9,7 @@ const authService = {};
 const { JWT_SIGN_KEY, JWT_EXPIRATION } = require('../config');
 const { USER_ROLES } = require('../enums');
 const nftService = require('./nft-service');
+const degodsService = require('./degods-service');
 
 const createJwtForUser = (user) => {
     const payload = {
@@ -45,7 +46,8 @@ authService.register = async (newUser) => {
         throw new Error(message);
     }
 
-    const crawledNftsPromise = solanaService.getNfts(newUser.wallet);
+    const onChainNftsPromise = solanaService.getNfts(newUser.wallet);
+    const degodsStakedNftsPromise = degodsService.getStakedNfts(newUser.wallet);
 
     newUser.password = await bcrypt.hash(newUser.password, 10);
 
@@ -58,13 +60,19 @@ authService.register = async (newUser) => {
         savedUser.username
     );
 
-    const crawledNfts = await crawledNftsPromise;
-    const nfts = crawledNfts.map((nft) => ({
+    let onChainNfts = await onChainNftsPromise;
+    onChainNfts = onChainNfts.map((nft) => ({
         mint: nft.mint,
         metaDataUri: nft.uri,
         symbol: nft.symbol,
         UserWallet: newUser.wallet,
     }));
+
+    // degods
+    const degodsStakedNfts = await degodsStakedNftsPromise;
+
+    // onChain + degods
+    const nfts = [...onChainNfts, ...degodsStakedNfts];
 
     const usersNfts = [];
     for (let i = 0; i < nfts.length; i++) {
