@@ -1,6 +1,6 @@
 import { Button, styled, TextField } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/authContext';
 import { GeneralPageStyle } from '../GeneralStyles';
@@ -96,6 +96,9 @@ const Login = () => {
         >
           Login
         </Button>
+        <Link style={{ marginLeft: '4px' }} to="/password-reset">
+          Forgot password?
+        </Link>
       </div>
     </StyledLogin>
   );

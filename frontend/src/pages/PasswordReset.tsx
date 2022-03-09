@@ -2,7 +2,7 @@ import { Button, styled, TextField } from '@mui/material';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../contexts/authContext';
-import { register } from '../requests/authRequests';
+import { passwordReset } from '../requests/authRequests';
 import MessageSignerButton from '../solana/MessageSignerButton';
 import { toast } from 'react-toastify';
 import { GeneralPageStyle } from '../GeneralStyles';
@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import bgImage from '../assets/images/blurry-gradient-haikei_2.svg';
 import { useLoading } from '../contexts/loadingContext';
 
-const StyledRegister = styled(GeneralPageStyle)(() => ({
+const StyledPasswordReset = styled(GeneralPageStyle)(() => ({
   backgroundImage: `url(${bgImage})`,
   backgroundSize: 'cover',
   '&>.panel': {
@@ -26,8 +26,8 @@ const StyledRegister = styled(GeneralPageStyle)(() => ({
   },
 }));
 
-const Register = () => {
-  const { isAuthenticated, logIn } = useAuth();
+const PasswordReset = () => {
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,7 +36,6 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [passwordAgain, setPasswordAgain] = useState<string>('');
   const [signedMessage, setSignedMessage] = useState<number[]>([]);
@@ -46,11 +45,6 @@ const Register = () => {
   const { decreaseLoadingCount, increaseLoadingCount } = useLoading();
 
   const evaluateForm = useCallback(() => {
-    if (!username) {
-      toast.error('Username is required');
-      return false;
-    }
-
     if (!password) {
       toast.error('Password is required');
       return false;
@@ -72,57 +66,55 @@ const Register = () => {
     }
 
     return true;
-  }, [username, password, passwordAgain, signedMessage, wallet]);
+  }, [password, passwordAgain, signedMessage, wallet]);
 
   useEffect(() => {
     setSignedMessage([]);
   }, [wallet]);
 
-  const onRegisterClick = useCallback(async () => {
+  const handleResetPasswordClick = useCallback(async () => {
     if (!evaluateForm()) {
       return;
     }
     increaseLoadingCount(1);
 
     try {
-      const { jwt, refreshToken } = await register({
+      const response = await passwordReset({
         wallet: wallet?.toString()!,
         signature: JSON.stringify(signedMessage),
-        username,
         password,
         confirmPassword: passwordAgain,
       });
-      decreaseLoadingCount(1);
 
-      logIn(jwt, refreshToken);
+      if (response.isSuccess) {
+        toast.success('Password changed successfully');
+        return navigate('/');
+      }
+
+      // @ts-ignore
+      toast.error(response.response.data.message);
     } catch (error) {
-      decreaseLoadingCount(1);
       // @ts-ignore
       toast.error(error.response.data.message);
+    } finally {
+      decreaseLoadingCount(1);
     }
   }, [
-    increaseLoadingCount,
     evaluateForm,
+    increaseLoadingCount,
     wallet,
     signedMessage,
-    username,
     password,
     passwordAgain,
+    navigate,
     decreaseLoadingCount,
-    logIn,
   ]);
 
   return (
-    <StyledRegister>
+    <StyledPasswordReset>
       <div className="panel">
         <TextField
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <TextField
-          label="Password"
+          label="New password"
           variant="outlined"
           type="password"
           value={password}
@@ -141,12 +133,12 @@ const Register = () => {
           }
           isSigned={signedMessage.length > 0}
         ></MessageSignerButton>
-        <Button variant="contained" onClick={onRegisterClick}>
-          Register
+        <Button variant="contained" onClick={handleResetPasswordClick}>
+          Reset password
         </Button>
       </div>
-    </StyledRegister>
+    </StyledPasswordReset>
   );
 };
 
-export default Register;
+export default PasswordReset;

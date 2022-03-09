@@ -32,6 +32,19 @@ export const register = async (registrationDetails: {
   return response.data;
 };
 
+export const passwordReset = async (registrationDetails: {
+  wallet: string;
+  signature: string;
+  password: string;
+  confirmPassword: string;
+}) => {
+  const response = await axios.post<{ isSuccess: boolean }>(
+    basePath + '/password-reset',
+    registrationDetails
+  );
+  return response.data;
+};
+
 export const refreshJwt = async (refreshToken: string) => {
   const response = await axios.post<AuthResponseData>(
     basePath + '/refresh-jwt/' + refreshToken

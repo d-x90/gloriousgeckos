@@ -3,6 +3,7 @@ import { useAuth } from './contexts/authContext';
 import Dashboard from './pages/Dashboard';
 import Game from './pages/Game';
 import Login from './pages/login';
+import PasswordReset from './pages/PasswordReset';
 import Register from './pages/register';
 
 const AppRoutes = () => {
@@ -15,6 +16,7 @@ const AppRoutes = () => {
       {isAuthenticated && <Route path="/lootboxes" element={<Lootboxes />} />}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/password-reset" element={<PasswordReset />} />
       <Route
         path="*"
         element={<Navigate to={isAuthenticated ? '/' : '/login'} />}

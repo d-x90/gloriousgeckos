@@ -25,6 +25,28 @@ const createJwtForUser = (user) => {
     return token;
 };
 
+authService.passwordReset = async (wallet, newPassword, signature) => {
+    if (!(await solanaService.verifyWallet(wallet, signature))) {
+        const message = `Wallet: '${wallet}' could not be verified for password reset'`;
+        logger.error(message);
+        throw new Error(message);
+    }
+
+    let user = await userService.getUserByWallet(wallet);
+
+    if (!user) {
+        const message = `User with wallet: '${wallet}' not found for password reset'`;
+        logger.error(message);
+        throw new Error(message);
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    user = await userService.updateUser({ password: newPasswordHash }, wallet);
+
+    return { isSuccess: true };
+};
+
 authService.register = async (newUser) => {
     if (
         !(await solanaService.verifyWallet(newUser.wallet, newUser.signature))

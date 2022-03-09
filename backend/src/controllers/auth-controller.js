@@ -3,6 +3,7 @@ const { authenticateJWT } = require('../middlewares');
 const {
     validateUserRegistration,
     validateUserLogin,
+    validatePasswordReset,
 } = require('../validators');
 
 const authRoutes = require('express').Router();
@@ -16,6 +17,25 @@ authRoutes.post(
                 req.body
             );
             res.status(200).json({ jwt: token, refreshToken });
+        } catch (err) {
+            res.status(400);
+            next(err);
+        }
+    }
+);
+
+authRoutes.post(
+    '/password-reset',
+    validatePasswordReset,
+    async (req, res, next) => {
+        try {
+            const { wallet, signature, password } = req.body;
+            const { isSuccess } = await authService.passwordReset(
+                wallet,
+                password,
+                signature
+            );
+            res.status(200).json({ isSuccess });
         } catch (err) {
             res.status(400);
             next(err);

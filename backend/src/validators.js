@@ -52,6 +52,20 @@ validators.validateUserRegistration = (req, res, next) => {
     validateRequest(req, res, next, schema);
 };
 
+validators.validatePasswordReset = (req, res, next) => {
+    const schema = Joi.object({
+        wallet: Joi.string().trim().required(),
+        signature: Joi.string().trim().required(),
+        password: Joi.string().trim().min(PASSWORD_MIN_LENGTH).required(),
+        confirmPassword: Joi.string()
+            .trim()
+            .valid(Joi.ref('password'))
+            .required(),
+    });
+
+    validateRequest(req, res, next, schema);
+};
+
 validators.validateUserLogin = (req, res, next) => {
     const schema = Joi.object({
         usernameOrWallet: Joi.string().trim().required(),
