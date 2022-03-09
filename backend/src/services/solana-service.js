@@ -8,8 +8,9 @@ var nacl = require('tweetnacl');
 nacl.util = require('tweetnacl-util');
 
 const NFT_WHITELIST = {
-    F9xNaaCgUrznEkRABCrsyvVjCvMgnCTniqDRCfAw4h4V: 'GloriousGeckos', // "updateAuthority" field
-    AxFuniPo7RaDgPH6Gizf4GZmLQFc4M5ipckeeZfkrPNn: 'DeGods',
+    AouX7hQB9d6BSwp96upmAjNiEfTbq7LWVnq1p66Vdi7Z: 'GloriousGeckos', // // CandyMachine id
+    '8RMqBV79p8sb51nMaKMWR94XKjUvD2kuUSAkpEJTmxyx': 'DeGods_1', // CandyMachine id
+    '9MynErYQ5Qi6obp4YwwdoDmXkZ1hYVtPUqYmJJ3rZ9Kn': 'DeGods_2', // CandyMachine id
 };
 
 const ourTokenAccountForGlory = '';
@@ -146,8 +147,8 @@ solanaService.verifyNftWhitelist = async (mint) => {
             metadataPDA
         );
 
-        return Object.keys(NFT_WHITELIST).includes(
-            tokenMetadata.data.updateAuthority
+        return tokenMetadata.data.data.creators.some((x) =>
+            Object.keys(NFT_WHITELIST).includes(x.address)
         );
     } catch (error) {
         throw error;
@@ -266,7 +267,9 @@ solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
 
         const nfts = nftResponses
             .filter((nftResponse) =>
-                Object.keys(NFT_WHITELIST).includes(nftResponse.updateAuthority)
+                nftResponse.data.creators.some((x) =>
+                    Object.keys(NFT_WHITELIST).includes(x.address)
+                )
             )
             .map((nftResponse) => ({
                 mint: nftResponse.mint,
