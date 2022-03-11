@@ -266,11 +266,15 @@ solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
         }
 
         const nfts = nftResponses
-            .filter((nftResponse) =>
-                nftResponse.data.creators.some((x) =>
+            .filter((nftResponse) => {
+                if (!nftResponse.data.creators) {
+                    return false;
+                }
+
+                return nftResponse.data.creators.some((x) =>
                     Object.keys(NFT_WHITELIST).includes(x.address)
-                )
-            )
+                );
+            })
             .map((nftResponse) => ({
                 mint: nftResponse.mint,
                 uri: nftResponse.data.uri,

@@ -96,12 +96,9 @@ nftRoutes.post(
         try {
             const userWallet = req.userInfo.wallet;
 
-            const queriedNfts = await nftService.getNftsByWallet(userWallet);
+            let queriedNfts = await nftService.getNftsByWallet(userWallet);
 
-            let onChainNfts = await solanaService.getNfts(
-                userWallet,
-                queriedNfts.map((nft) => nft.mint)
-            );
+            let onChainNfts = await solanaService.getNfts(userWallet);
             onChainNfts = onChainNfts.map((nft) => ({
                 mint: nft.mint,
                 metaDataUri: nft.uri,
@@ -117,21 +114,47 @@ nftRoutes.post(
 
             const newNfts = [];
             for (let i = 0; i < nfts.length; i++) {
-                const existingNft = await nftService.getNft(nfts[i].mint);
-                if (existingNft) {
-                    if (existingNft.UserWallet !== userWallet) {
-                        const updatedNft = await nftService.updateNft(
-                            { UserWallet: userWallet },
-                            nfts[i].mint
-                        );
-                        newNfts.push(updatedNft);
+                const currentNft = nfts[i];
+                const nftIsOwnedInOurDB = queriedNfts.some(
+                    (x) => x.mint === currentNft.mint
+                );
+
+                // If nft owned on chain and owned in db then do nothing
+                // otherwise it's a new NFT in this wallet
+                if (!nftIsOwnedInOurDB) {
+                    const existingNft = await nftService.getNft(nfts[i].mint);
+                    if (existingNft) {
+                        // If it's stored in db for other user change ownership
+                        if (existingNft.UserWallet !== userWallet) {
+                            const updatedNft = await nftService.updateNft(
+                                { UserWallet: userWallet },
+                                nfts[i].mint
+                            );
+                            newNfts.push(updatedNft);
+                        }
+                        // owherwise add it to db
+                    } else {
+                        newNfts.push(await nftService.createNft(nfts[i]));
                     }
-                } else {
-                    newNfts.push(await nftService.createNft(nfts[i]));
                 }
+
+                // remove nft mint from already owned nft list
+                queriedNfts = queriedNfts.filter(
+                    (x) => x.mint !== currentNft.mint
+                );
             }
 
-            res.json({ newNfts });
+            // Remove those nfts from user that are not owned anymore
+            for (let j = 0; j < queriedNfts.length; j++) {
+                const updatedNft = await nftService.updateNft(
+                    { UserWallet: null },
+                    queriedNfts[j].mint
+                );
+            }
+
+            // TODO testit
+
+            res.json({ newNfts, removedNfts: queriedNfts });
         } catch (err) {
             logger.error(
                 `Couldn't get more usable nfts for user: '${req.userInfo.username}'`

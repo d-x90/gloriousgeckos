@@ -70,19 +70,21 @@ export const getNfts = async (jwt: string) => {
 
 export const requestCheckForNewNfts = async (jwt: string) => {
   try {
-    const response = await axios.post<{ newNfts: NftDto[] }>(
-      `${basePath}/check-for-new-nfts`,
-      null,
-      {
-        headers: {
-          Authorization: 'Bearer ' + jwt,
-        },
-      }
-    );
+    const response = await axios.post<{
+      newNfts: NftDto[];
+      removedNfts: NftDto[];
+    }>(`${basePath}/check-for-new-nfts`, null, {
+      headers: {
+        Authorization: 'Bearer ' + jwt,
+      },
+    });
 
-    const { newNfts } = response.data;
+    const { newNfts, removedNfts } = response.data;
 
-    return await decorateNfts(newNfts);
+    const decoratedNewNfts = await decorateNfts(newNfts);
+    const decoratedRemovedNfts = await decorateNfts(removedNfts);
+
+    return { newNfts: decoratedNewNfts, removedNfts: decoratedRemovedNfts };
   } catch (error) {
     console.log({ message: 'big error', error });
   }

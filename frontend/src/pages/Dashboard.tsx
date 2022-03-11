@@ -132,9 +132,15 @@ const Dashboard = () => {
         >
           Revive
         </Button>
-        <Button variant="outlined" onClick={() => checkForNewNfts()}>
-          I can't see my NFT!
-        </Button>
+        <Tooltip
+          arrow
+          placement="left"
+          title="Click here if you can't see your nft or you sold some of them"
+        >
+          <Button variant="outlined" onClick={() => checkForNewNfts()}>
+            Revalidate my NFTs
+          </Button>
+        </Tooltip>
 
         <Tooltip arrow placement="left" title="Log out">
           <p

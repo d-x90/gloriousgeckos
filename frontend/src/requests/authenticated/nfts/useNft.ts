@@ -47,8 +47,13 @@ const useNft = () => {
 
   const checkForNewNfts = useCallback(async () => {
     increaseLoadingCount(1);
-    const newNfts = await authenticatedApiCall(requestCheckForNewNfts);
-    setNfts([...nfts, ...newNfts]);
+    const { newNfts, removedNfts } = await authenticatedApiCall(
+      requestCheckForNewNfts
+    );
+    setNfts([
+      ...nfts.filter((x) => !removedNfts.some((y: Nft) => x.mint === y.mint)),
+      ...newNfts,
+    ]);
     decreaseLoadingCount(1);
   }, [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount, nfts]);
 

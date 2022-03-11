@@ -12,14 +12,12 @@ degodsApi.fetchStakingInfo = async (wallet) => {
         });
 
         if (response.status !== 200) {
-            logger.error(response);
             throw new Error('Degods staking lookup failed');
         }
 
         return response.data;
     } catch (error) {
         logger.error(error);
-        logger.error('Degods staking lookup failed');
         return null;
     }
 };
