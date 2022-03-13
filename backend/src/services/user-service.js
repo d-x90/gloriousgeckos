@@ -164,4 +164,8 @@ userService.checkIfUserExistsByUsername = async (username) => {
     return count > 0;
 };
 
+userService.getAllUserWallet = async () => {
+    return await User.findAll({ attributes: ['wallet'] });
+};
+
 module.exports = userService;
