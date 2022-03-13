@@ -8,8 +8,11 @@ const nftService = require('./services/nft-service');
 // Resurrect nfts daily if at least one gecko is held
 (async () => {
     let userWallets = await userService.getAllUserWallet();
-    userWallets.forEach(async ({ wallet }) => {
+
+    for (let i = 0; i < userWallets.length; i++) {
+        const wallet = userWallets[i].wallet;
         console.log({ wallet });
+
         const nftsOfUser = await nftService.getNftsByWallet(wallet);
         const geckoNft = nftsOfUser.find((nft) => nft.symbol === 'GG');
         if (geckoNft) {
@@ -17,6 +20,8 @@ const nftService = require('./services/nft-service');
                 geckoNft.mint,
                 wallet
             );
+
+            Promise.waitFor(1000);
 
             if (isVerified) {
                 await nftService.updateAllNftForUser(
@@ -30,5 +35,5 @@ const nftService = require('./services/nft-service');
                 console.log(`Nfts resurrected for "${wallet}"`);
             }
         }
-    });
+    }
 })();
