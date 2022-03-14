@@ -18,7 +18,7 @@ const NFT_WHITELIST = {
     Hj4QVRWSR6wiXp4QYpxXwKUiNzk7GFB93p77fcsHyvfe: 'SKOLs_2',
     Gmyf7wsNP2VBV8FzjUmG3Jyux9yGLFghu5oDQ6Cozs6g: 'SKOLs_3',
     FMssZj67gVa7abFBhasAJnhUyFBrRmFuir2G16NMvfie: 'SKOLs_4',
-    Cggan6SVRQVBEmuDfb7BCbN6rd7MWRjkvEEUichokULa: 'SKOLs_5',
+    Ck6VvLL39w7Skq9TmWpbvx1dU2QtRCATV8SNru4awXrk: 'SKOLs_5',
 };
 
 const ourTokenAccountForGlory = '';
