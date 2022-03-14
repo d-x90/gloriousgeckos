@@ -1,10 +1,5 @@
-const User = require('../models/user');
-const { Op } = require('sequelize');
 const uuid = require('uuid');
-const Nft = require('../models/nft');
-const Inventory = require('../models/inventory');
 const nftService = require('./nft-service');
-const solanaService = require('./solana-service');
 const userService = require('./user-service');
 const shittyEncryptor = require('./shitty-encyptor');
 const abstractNftService = require('./abstract-nft-service');
@@ -12,33 +7,38 @@ const logger = require('../logger-factory').get('./game-service.js');
 
 const gameService = {};
 
-gameService.startGame = async ({ nftMint, wallet, config }) => {
-    let nft = await nftService.getNft(nftMint);
+gameService.startGame = async ({ nftMint, secondaries, wallet, config }) => {
+    const nftMints = [nftMint, ...secondaries.filter((x) => x !== nftMint)];
+    for (let i = 0; i < nftMints.length; i++) {
+        let nft = await nftService.getNft(nftMints[i]);
 
-    if (!nft) {
-        throw new Error(`NFT not found`);
-    }
+        if (!nft) {
+            throw new Error(`NFT not found`);
+        }
 
-    if (nft.UserWallet !== wallet) {
-        throw new Error('NFT does not belong to the user');
-    }
+        if (nft.UserWallet !== wallet) {
+            throw new Error('NFT does not belong to the user');
+        }
 
-    if (nft.isOnCooldown) {
-        throw new Error(`NFT is on cooldown`);
-    }
+        if (nft.isOnCooldown) {
+            throw new Error(`NFT is on cooldown`);
+        }
 
-    if (nft.isDead) {
-        throw new Error('Dead NFTs cannot play');
-    }
+        if (nft.isDead) {
+            throw new Error('Dead NFTs cannot play');
+        }
 
-    const isNftOwned = await abstractNftService.verifyNftOwnership(
-        nftMint,
-        wallet
-    );
+        const isNftOwned = await abstractNftService.verifyNftOwnership(
+            nft.mint,
+            wallet
+        );
 
-    if (!isNftOwned) {
-        await nftService.updateNft({ UserWallet: null }, nft.mint);
-        throw new Error('NFT is not valid');
+        if (!isNftOwned) {
+            await nftService.updateNft({ UserWallet: null }, nft.mint);
+            throw new Error(`NFT is not valid (${nft.mint})`);
+        }
+
+        Promise.waitFor(250);
     }
 
     const hash = uuid.v4();
@@ -46,7 +46,8 @@ gameService.startGame = async ({ nftMint, wallet, config }) => {
     const user = await userService.getUserByWallet(wallet);
     user.currentGameConfig = {
         ...config,
-        nftMint: nft.mint,
+        nftMint,
+        secondaries,
         expectedHash: hash,
     };
 
@@ -86,47 +87,66 @@ gameService.finishGame = async ({ payload, wallet }) => {
         throw new Error('Invalid hash');
     }
 
-    const nft = await nftService.getNft(currentGameConfig.nftMint);
-    if (!nft) {
-        throw new Error('Nft not found');
-    }
+    let allGloryEarned = 0;
 
-    const isOwner = await abstractNftService.verifyNftOwnership(
-        nft.mint,
-        wallet
-    );
-    if (!isOwner) {
-        await userService.updateUser(
-            { redFlagCount: user.redFlagCount + 1 },
+    const nftMints = [
+        currentGameConfig.nftMint,
+        ...currentGameConfig.secondaries,
+    ];
+
+    for (let i = 0; i < nftMints.length; i++) {
+        const nft = await nftService.getNft(nftMints[i]);
+        if (!nft) {
+            throw new Error('One of the Nfts is not found');
+        }
+
+        const isOwner = await abstractNftService.verifyNftOwnership(
+            nft.mint,
             wallet
         );
-        if (nft.UserWallet === wallet) {
-            await nftService.updateNft({ UserWallet: null }, nft.mint);
+        if (!isOwner) {
+            await userService.updateUser(
+                { redFlagCount: user.redFlagCount + 1 },
+                wallet
+            );
+            if (nft.UserWallet === wallet) {
+                await nftService.updateNft({ UserWallet: null }, nft.mint);
+            }
+            throw new Error(
+                'One of the nfts is not owned at the end of the game'
+            );
         }
-        throw new Error('Nft is not owned at the end of the game');
+
+        const nftPatch = {};
+        let actualScore = providedScore;
+        if (providedScore + nft.score >= nft.dailyLimit) {
+            actualScore = nft.dailyLimit - nft.score;
+
+            nftPatch.isOnCooldown = true;
+        }
+        allGloryEarned += actualScore;
+
+        nftPatch.score = nft.score + actualScore;
+        const didPlayAsSecondary = nft.mint !== currentGameConfig.nftMint;
+        const isGloriousGecko = nft.symbol === 'GG';
+
+        if (didPlayAsSecondary) {
+            nftPatch.isDead = providedDidDie && !isGloriousGecko;
+        } else {
+            nftPatch.isDead = providedDidDie;
+        }
+
+        await nftService.updateNft(nftPatch, nft.mint);
+        await Promise.waitFor(250);
     }
-
-    const nftPatch = {};
-    if (providedScore + nft.score >= nft.dailyLimit) {
-        providedScore = nft.dailyLimit - nft.score;
-
-        nftPatch.isOnCooldown = true;
-    }
-    newNftScore = nft.score + providedScore;
-    newBalance = user.balance + providedScore;
-
-    nftPatch.score = newNftScore;
-    nftPatch.isDead = providedDidDie;
 
     // TODO: remove items used or remove them at start? iteration 2
-
-    nftService.updateNft(nftPatch, nft.mint);
-    userService.updateUser(
-        { balance: newBalance, currentGameConfig: null },
+    await userService.updateUser(
+        { balance: user.balance + allGloryEarned, currentGameConfig: null },
         user.wallet
     );
 
-    return true;
+    return { isSuccess: true, gloryEarned: allGloryEarned };
 };
 
 module.exports = gameService;

@@ -44,9 +44,12 @@ const Game = () => {
   const [hash, setHash] = useState('');
   const [isGameFinished, setIsGetgameFinished] = useState(false);
 
+  const [didDie, setDidDie] = useState(false);
+
   const { increaseLoadingCount, decreaseLoadingCount } = useLoading();
   const { isAuthenticated, authenticatedApiCall } = useAuth();
-  const { selectedNft } = useGlobal();
+  const { selectedNft, secondaryNfts, resetSelections, refreshUser } =
+    useGlobal();
 
   const navigate = useNavigate();
 
@@ -60,12 +63,14 @@ const Game = () => {
       try {
         const response = await authenticatedApiCall(
           startGame,
-          selectedNft.mint
+          selectedNft.mint,
+          secondaryNfts
         );
         if (response.hash) {
           setHash(response.hash);
         } else {
           toast.error(response.response.data.message);
+          navigate('/');
         }
       } catch (error) {
         toast.error('Something went wrong');
@@ -80,6 +85,8 @@ const Game = () => {
     increaseLoadingCount,
     isAuthenticated,
     navigate,
+    resetSelections,
+    secondaryNfts,
     selectedNft,
   ]);
 
@@ -105,10 +112,12 @@ const Game = () => {
 
       unityContext.on('GameOver', async (payload, score, didDie) => {
         increaseLoadingCount(1);
+        setDidDie(didDie);
         try {
           const response = await authenticatedApiCall(endGame, payload);
           if (response.isSuccess) {
             toast.success('Result submitted successfully');
+            toast.success(`${response.gloryEarned} $GLORY earned`);
           } else {
             toast.error(response.response.data.message);
           }
@@ -119,7 +128,7 @@ const Game = () => {
           navigate('/');
         }
         decreaseLoadingCount(1);
-        console.log({ payload, score, didDie: Boolean(didDie) });
+        refreshUser();
         setIsGetgameFinished(true);
       });
     }
@@ -129,6 +138,7 @@ const Game = () => {
     hash,
     increaseLoadingCount,
     navigate,
+    refreshUser,
     selectedNft,
   ]);
 
@@ -146,9 +156,49 @@ const Game = () => {
         <p>Loading...{Math.ceil(progression * 100)}%</p>
       ) : null}
       {isGameFinished ? (
-        <Button variant="contained" onClick={() => navigate('/')}>
-          Back to dashboard
-        </Button>
+        <>
+          {!didDie ? (
+            <Button
+              style={{ marginTop: '16px' }}
+              variant="contained"
+              onClick={async () => {
+                setHash('');
+                setIsGetgameFinished(false);
+                increaseLoadingCount(1);
+                try {
+                  const response = await authenticatedApiCall(
+                    startGame,
+                    selectedNft?.mint,
+                    secondaryNfts
+                  );
+                  if (response.hash) {
+                    setHash(response.hash);
+                  } else {
+                    toast.error(response.response.data.message);
+                    navigate('/');
+                  }
+                } catch (error) {
+                  toast.error('Something went wrong');
+                  navigate('/');
+                } finally {
+                  decreaseLoadingCount(1);
+                }
+              }}
+            >
+              Play Again
+            </Button>
+          ) : null}
+          <Button
+            style={{ marginTop: '16px' }}
+            variant={didDie ? 'contained' : 'outlined'}
+            onClick={() => {
+              resetSelections();
+              navigate('/');
+            }}
+          >
+            Back to dashboard
+          </Button>
+        </>
       ) : null}
     </GameContainer>
   );

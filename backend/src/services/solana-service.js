@@ -11,6 +11,14 @@ const NFT_WHITELIST = {
     AouX7hQB9d6BSwp96upmAjNiEfTbq7LWVnq1p66Vdi7Z: 'GloriousGeckos', // // CandyMachine id
     '8RMqBV79p8sb51nMaKMWR94XKjUvD2kuUSAkpEJTmxyx': 'DeGods_1', // CandyMachine id
     '9MynErYQ5Qi6obp4YwwdoDmXkZ1hYVtPUqYmJJ3rZ9Kn': 'DeGods_2', // CandyMachine id
+    '7Jfs3qFFD2a4ceyxKCHo317sj5Jenze88Gxftb2ex95n': 'Pitbull_1',
+    GJLjwBv871zpPvGKxLmdWfajwRkBk6LehWgubHXR8dtc: 'Pitbull_2',
+    '87ASowGZpFu6NeWVh8LUwesqAPhm1ust7Q5KMD4Z3txc': 'Pitbull_3',
+    ChENcrLegRfjiPY8NY182cskX6v7Q8cmrKGgSR1YffGF: 'SKOLs_1',
+    Hj4QVRWSR6wiXp4QYpxXwKUiNzk7GFB93p77fcsHyvfe: 'SKOLs_2',
+    Gmyf7wsNP2VBV8FzjUmG3Jyux9yGLFghu5oDQ6Cozs6g: 'SKOLs_3',
+    FMssZj67gVa7abFBhasAJnhUyFBrRmFuir2G16NMvfie: 'SKOLs_4',
+    Cggan6SVRQVBEmuDfb7BCbN6rd7MWRjkvEEUichokULa: 'SKOLs_5',
 };
 
 const ourTokenAccountForGlory = '';

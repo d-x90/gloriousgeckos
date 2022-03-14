@@ -10,6 +10,7 @@ gameRoutes.post('/start', authenticateJWT, async (req, res, next) => {
     try {
         const { hash } = await gameService.startGame({
             nftMint: req.body.nftMint,
+            secondaries: [...new Set(req.body.secondaries)],
             wallet: req.userInfo.wallet,
             config: req.body.config || {},
         });
@@ -25,11 +26,11 @@ gameRoutes.post('/start', authenticateJWT, async (req, res, next) => {
 gameRoutes.post('/finish', authenticateJWT, async (req, res, next) => {
     try {
         const { payload } = req.body;
-        const isSuccess = await gameService.finishGame({
+        const { isSuccess, gloryEarned } = await gameService.finishGame({
             payload,
             wallet: req.userInfo.wallet,
         });
-        res.json({ isSuccess });
+        res.json({ isSuccess, gloryEarned });
     } catch (err) {
         logger.error(`Error ending game for user: '${req.userInfo.username}'`);
         next(err);

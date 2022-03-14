@@ -4,12 +4,11 @@ import { toast } from 'react-toastify';
 import NftCard from '../components/NftCard';
 import { useGlobal } from '../contexts/globalContext';
 import useNft from '../requests/authenticated/nfts/useNft';
-import bgImage from '../assets/images/blurry-gradient-haikei.svg';
-import { AxiosError } from 'axios';
 import { useEffect } from 'react';
 import { useModal } from '../contexts/modalContext';
 import { useAuth } from '../contexts/authContext';
 import LogoutIcon from '@mui/icons-material/Logout';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 const StyledDashboard = styled('div')(() => ({
   width: '100vw',
@@ -52,7 +51,14 @@ const Dashboard = () => {
   } = useNft();
   const navigate = useNavigate();
 
-  const { selectedNft, selectNft, refreshUser } = useGlobal();
+  const {
+    selectedNft,
+    selectNft,
+    refreshUser,
+    secondaryNfts,
+    addSecondaryNft,
+    removeSecondaryNft,
+  } = useGlobal();
   const { logOut } = useAuth();
 
   const { showModal } = useModal();
@@ -75,7 +81,10 @@ const Dashboard = () => {
         {nfts.map((nft) => (
           <NftCard
             key={nft.mint}
-            onClick={() => selectNft(nft)}
+            onClick={() => {
+              nft.mint === selectedNft?.mint ? selectNft(null) : selectNft(nft);
+              removeSecondaryNft(nft.mint);
+            }}
             isSelected={selectedNft?.mint === nft.mint}
             nft={nft}
           />
@@ -158,6 +167,25 @@ const Dashboard = () => {
             onClick={logOut}
           >
             <LogoutIcon />
+          </p>
+        </Tooltip>
+
+        <Tooltip arrow placement="left" title="Rules">
+          <p
+            style={{
+              position: 'absolute',
+              left: 0,
+              marginRight: '12px',
+              fontWeight: 'bolder',
+              fontSize: '18px',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              color: 'black',
+            }}
+            className="info-btn"
+            onClick={() => navigate('/info')}
+          >
+            <InfoOutlinedIcon />
           </p>
         </Tooltip>
       </div>

@@ -3,12 +3,14 @@ import {
   CardActionArea,
   CardContent,
   CardMedia,
+  Checkbox,
   styled,
   Tooltip,
 } from '@mui/material';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Nft } from '../requests/authenticated/nfts/useNft';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
+import { useGlobal } from '../contexts/globalContext';
 
 const StyledNftCard = styled('div', {
   shouldForwardProp: (prop) =>
@@ -41,13 +43,29 @@ const StyledNftCard = styled('div', {
 );
 
 function getDurationUntilNextMidnightInMs() {
-  var midnight = new Date();
-  midnight.setUTCHours(24);
-  midnight.setUTCMinutes(0);
-  midnight.setUTCSeconds(0);
-  midnight.setUTCMilliseconds(0);
+  const now = new Date();
 
-  return midnight.getTime() - new Date().getTime();
+  const midnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth() + 1,
+    now.getUTCDate(),
+    24,
+    0,
+    0,
+    0
+  );
+
+  const utcNow = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth() + 1,
+    now.getUTCDate(),
+    now.getUTCHours(),
+    now.getUTCMinutes(),
+    now.getUTCSeconds(),
+    now.getUTCMilliseconds()
+  );
+
+  return midnight - utcNow + now.getTimezoneOffset() * 60 * 1000;
 }
 
 function msToTime(duration: number) {
@@ -62,20 +80,25 @@ function msToTime(duration: number) {
   return hours + ':' + minutes + ':' + seconds;
 }
 
-const NftCard: FC<{ nft: Nft; onClick: any; isSelected: boolean }> = ({
-  nft,
-  onClick,
-  isSelected,
-}) => {
+const NftCard: FC<{
+  nft: Nft;
+  onClick: any;
+  isSelected: boolean;
+}> = ({ nft, onClick, isSelected }) => {
   const [cooldown, setCooldown] = useState(getDurationUntilNextMidnightInMs());
   const [isTooltipOpen, setTooltipOpen] = useState(false);
+  const { addSecondaryNft, removeSecondaryNft, secondaryNfts } = useGlobal();
   const ref = useRef<number>();
+
+  const isSelectedAsSecondary = useMemo(
+    () => secondaryNfts.some((x) => x === nft.mint),
+    [nft.mint, secondaryNfts]
+  );
 
   const handleOpen = () => {
     setCooldown(getDurationUntilNextMidnightInMs());
     setTooltipOpen(true);
     ref.current = setInterval(() => {
-      console.log('TICK');
       setCooldown(getDurationUntilNextMidnightInMs());
     }, 1000) as unknown as number;
   };
@@ -84,6 +107,30 @@ const NftCard: FC<{ nft: Nft; onClick: any; isSelected: boolean }> = ({
     setTooltipOpen(false);
     clearInterval(ref.current);
   };
+
+  const handleSelectAsSecondary = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (nft.isOnCooldown || nft.isDead || isSelected) {
+        return;
+      }
+
+      if (isSelectedAsSecondary) {
+        removeSecondaryNft(nft.mint);
+      } else {
+        addSecondaryNft(nft.mint);
+      }
+    },
+    [
+      addSecondaryNft,
+      isSelected,
+      isSelectedAsSecondary,
+      nft.isDead,
+      nft.isOnCooldown,
+      nft.mint,
+      removeSecondaryNft,
+    ]
+  );
 
   // @ts-ignore
   useEffect(() => () => ref.current ? clearInterval(ref.current) : null, []);
@@ -116,30 +163,47 @@ const NftCard: FC<{ nft: Nft; onClick: any; isSelected: boolean }> = ({
           </>
         }
       >
-        <Card sx={{ width: 200, height: 250 }}>
-          <CardActionArea
-            onClick={(e) => {
-              e.stopPropagation();
+        <Card
+          sx={{ width: 200, height: 250 }}
+          onClick={(e: any) => {
+            e.stopPropagation();
 
-              if (nft.isOnCooldown) {
-                return;
-              }
+            if (nft.isOnCooldown) {
+              return;
+            }
 
-              onClick();
-            }}
-          >
+            onClick();
+          }}
+        >
+          <CardActionArea>
             <CardMedia
               component="img"
               height="150"
               image={nft.image}
               alt={nft.name}
             />
+
             <CardContent>
               <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
                 {nft.name} {nft.isOnCooldown ? <AccessTimeFilledIcon /> : null}
               </p>
             </CardContent>
           </CardActionArea>
+          <Tooltip title="Select as secondary" arrow placement="left">
+            <Checkbox
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+              }}
+              onClick={handleSelectAsSecondary}
+              checked={
+                isSelectedAsSecondary &&
+                !(nft.isOnCooldown || nft.isDead || isSelected)
+              }
+              disabled={nft.isOnCooldown || nft.isDead || isSelected}
+            ></Checkbox>
+          </Tooltip>
         </Card>
       </Tooltip>
     </StyledNftCard>

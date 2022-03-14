@@ -15,15 +15,23 @@ import { useLoading } from './loadingContext';
 interface GlobalContextValue {
   selectedNft: Nft | null;
   selectNft: (nft: Nft | null) => void;
+  secondaryNfts: string[];
+  addSecondaryNft: (mint: string) => void;
+  removeSecondaryNft: (mint: string) => void;
   user: User | null;
   refreshUser: () => void;
+  resetSelections: () => void;
 }
 
 const DEFAULT_CONTEXT: GlobalContextValue = {
   selectedNft: null,
   selectNft: () => {},
+  secondaryNfts: [],
+  addSecondaryNft: (mint: string) => {},
+  removeSecondaryNft: (mint: string) => {},
   user: null,
   refreshUser: () => {},
+  resetSelections: () => {},
 };
 
 const GlobalContext = createContext<GlobalContextValue>(DEFAULT_CONTEXT);
@@ -34,6 +42,7 @@ export const useGlobal = () => {
 
 export const GlobalContextProvider: FC = ({ children }) => {
   const [selectedNft, selectNft] = useState<Nft | null>(null);
+  const [secondaryNfts, setSecondaryNfts] = useState<string[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
   const { decreaseLoadingCount, increaseLoadingCount } = useLoading();
@@ -77,14 +86,45 @@ export const GlobalContextProvider: FC = ({ children }) => {
     isAuthenticated,
   ]);
 
+  const addSecondaryNft = useCallback(
+    (mint) => {
+      setSecondaryNfts((secondaries) => [...secondaries, mint]);
+    },
+    [setSecondaryNfts]
+  );
+
+  const removeSecondaryNft = useCallback(
+    (mint) => {
+      setSecondaryNfts((secondaries) => secondaries.filter((x) => x !== mint));
+    },
+    [setSecondaryNfts]
+  );
+
+  const resetSelections = useCallback(() => {
+    setSecondaryNfts((secondaries) => []);
+    selectNft(null);
+  }, [setSecondaryNfts, selectNft]);
+
   const contextValue = useMemo(
     () => ({
       selectedNft,
       selectNft,
+      secondaryNfts,
+      addSecondaryNft,
+      removeSecondaryNft,
+      resetSelections,
       user,
       refreshUser,
     }),
-    [refreshUser, selectedNft, user]
+    [
+      addSecondaryNft,
+      refreshUser,
+      removeSecondaryNft,
+      resetSelections,
+      secondaryNfts,
+      selectedNft,
+      user,
+    ]
   );
 
   return (
