@@ -6,7 +6,7 @@ const degodsService = {};
 degodsService.getStakedNfts = async (wallet) => {
     const degodsStakingInfo = await degodsApi.fetchStakingInfo(wallet);
 
-    if (!degodsStakingInfo) {
+    if (!degodsStakingInfo || !degodsStakingInfo.gems) {
         return [];
     }
 
