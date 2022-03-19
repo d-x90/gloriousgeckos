@@ -6,6 +6,8 @@
     "scripts": {
         "start": "nodemon src/app.js",
         "serve": "node src/app.js",
+        "cronjob:daily": "node src/cronjobs.js daily",
+        "cronjob:weekly": "node src/cronjobs.js weekly",
         "test": "mocha unit-tests"
     },
     "keywords": [],

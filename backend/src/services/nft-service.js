@@ -48,6 +48,15 @@ nftService.updateAllNftForUser = async (nft, wallet) => {
     return updatedRows[0];
 };
 
+nftService.updateAllNft = async (nft) => {
+    const [_, updatedRows] = await Nft.update(nft, {
+        where: {},
+        returning: true,
+    });
+
+    return updatedRows[0];
+};
+
 nftService.deleteNft = (mint) => {
     return Nft.destroy({
         where: {
