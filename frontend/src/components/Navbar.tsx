@@ -9,6 +9,7 @@ import { useLoading } from '../contexts/loadingContext';
 import { useModal } from '../contexts/modalContext';
 import { buyRevivePotion } from '../requests/authenticated/storeRequests';
 import HomeIcon from '@mui/icons-material/Home';
+import EggIcon from '@mui/icons-material/Egg';
 
 const StyledNavbar = styled('div')(() => ({
   display: 'flex',
@@ -77,6 +78,7 @@ const Navbar = () => {
     decreaseLoadingCount,
     increaseLoadingCount,
     refreshUser,
+    showModal,
   ]);
 
   return (
@@ -87,6 +89,11 @@ const Navbar = () => {
             <Link to="/">
               <Tooltip title="Dashboard" placement="right" arrow>
                 <HomeIcon />
+              </Tooltip>
+            </Link>
+            <Link to="/staking">
+              <Tooltip title="Staking" placement="right" arrow>
+                <EggIcon />
               </Tooltip>
             </Link>
           </>

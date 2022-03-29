@@ -103,6 +103,7 @@ const Game = () => {
 
       unityContext.on('SceneLoaded', () => {
         unityContext.send('GameManager', 'SetHash', hash);
+        unityContext.send('GameManager', 'SetSymbol', selectedNft.symbol || '');
         unityContext.send(
           'GameManager',
           'SetNFTImageThenStart',

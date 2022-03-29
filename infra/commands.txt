@@ -3,4 +3,4 @@ ssh -L 9999:gloriousgeckos.world:5432 -i .\.config\digitalocean\dx90 root@glorio
 
 
 # certbot
-https://seanthegeek.net/1035/how-to-configure-a-nginx-reverse-proxy-with-lets-encrypt-certificates/
+https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04

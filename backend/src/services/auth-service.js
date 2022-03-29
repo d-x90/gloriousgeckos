@@ -101,7 +101,11 @@ authService.register = async (newUser) => {
         const existingNft = await nftService.getNft(nfts[i].mint);
         if (existingNft) {
             const updatedNft = await nftService.updateNft(
-                { UserWallet: newUser.wallet },
+                {
+                    UserWallet: newUser.wallet,
+                    isStaked: false,
+                    claimableStakingRewards: 0,
+                },
                 nfts[i].mint
             );
             usersNfts.push(updatedNft);

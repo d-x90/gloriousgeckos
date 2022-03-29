@@ -11,6 +11,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Nft } from '../requests/authenticated/nfts/useNft';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import { useGlobal } from '../contexts/globalContext';
+import EggIcon from '@mui/icons-material/Egg';
 
 const StyledNftCard = styled('div', {
   shouldForwardProp: (prop) =>
@@ -189,6 +190,17 @@ const NftCard: FC<{
               </p>
             </CardContent>
           </CardActionArea>
+          {nft.isStaked ? (
+            <Tooltip title="Staked" arrow placement="right">
+              <EggIcon
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                }}
+              />
+            </Tooltip>
+          ) : null}
           <Tooltip title="Select as secondary" arrow placement="left">
             <Checkbox
               style={{

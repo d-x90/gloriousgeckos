@@ -8,6 +8,8 @@ const rateLimit = require('express-rate-limit');
 const inventoryService = require('../services/inventory-service');
 const degodsService = require('../services/degods-service');
 const abstractNftService = require('../services/abstract-nft-service');
+const { LAMPORTS_PER_SOL } = require('@solana/web3.js');
+const transactionService = require('../services/transaction-service');
 
 nftRoutes.get('/all', authenticateJWT, async (req, res, next) => {
     try {
@@ -80,6 +82,140 @@ nftRoutes.post('/:mint/revive', authenticateJWT, async (req, res, next) => {
     }
 });
 
+nftRoutes.post('/:mint/stake', authenticateJWT, async (req, res, next) => {
+    try {
+        const queriedNft = await nftService.getNft(req.params.mint);
+
+        if (!queriedNft) {
+            res.status(404);
+            throw new Error('Nft not found');
+        }
+
+        if (queriedNft.UserWallet !== req.userInfo.wallet) {
+            res.status(400);
+            throw new Error("It's not your nft");
+        }
+
+        if (queriedNft.isStaked) {
+            res.status(400);
+            throw new Error('Nft already staked');
+        }
+
+        if (queriedNft.symbol !== 'GG') {
+            res.status(400);
+            throw new Error('Only GloriousGeckos can be staked');
+        }
+
+        /*
+        don't gather fee on staking
+
+        if (await transactionService.getTransaction(req.body.txSignature)) {
+            res.status(400);
+            throw new Error('Transaction already processed');
+        }
+
+
+        const { verified, amountSent } = await solanaService.verifySolTransfer(
+            req.body.txSignature,
+            req.userInfo.wallet
+        );
+
+        await transactionService.createTransaction({
+            signature: req.body.txSignature,
+            UserWallet: req.userInfo.wallet,
+            amount: amountSent,
+            tokenMint: 'SOL',
+        });
+
+        const isFeePaid = verified && amountSent >= LAMPORTS_PER_SOL * 0.02;
+
+        if (!isFeePaid) {
+            res.status(400);
+            throw new Error('Fee is not paid yet');
+        }
+        */
+
+        await nftService.updateNft(
+            { isStaked: true, stakingDaysLeft: 50 },
+            queriedNft.mint
+        );
+
+        res.json({ staked: true });
+    } catch (err) {
+        logger.error(
+            `Couldn't stake nft: '${req.params.mint}' for user: '${req.userInfo.username}'`
+        );
+        next(err);
+    }
+});
+
+nftRoutes.post('/:mint/unstake', authenticateJWT, async (req, res, next) => {
+    try {
+        const queriedNft = await nftService.getNft(req.params.mint);
+
+        if (!queriedNft) {
+            res.status(404);
+            throw new Error('Nft not found');
+        }
+
+        if (queriedNft.UserWallet !== req.userInfo.wallet) {
+            res.status(400);
+            throw new Error("It's not your nft");
+        }
+
+        if (!queriedNft.isStaked) {
+            res.status(400);
+            throw new Error('Nft is not staked');
+        }
+
+        if (queriedNft.symbol !== 'GG') {
+            res.status(400);
+            throw new Error('Only GloriousGeckos can be unstaked');
+        }
+
+        /*
+        don't gather fee on staking
+
+        if (await transactionService.getTransaction(req.body.txSignature)) {
+            res.status(400);
+            throw new Error('Transaction already processed');
+        }
+
+
+        const { verified, amountSent } = await solanaService.verifySolTransfer(
+            req.body.txSignature,
+            req.userInfo.wallet
+        );
+
+        await transactionService.createTransaction({
+            signature: req.body.txSignature,
+            UserWallet: req.userInfo.wallet,
+            amount: amountSent,
+            tokenMint: 'SOL',
+        });
+
+        const isFeePaid = verified && amountSent >= LAMPORTS_PER_SOL * 0.02;
+
+        if (!isFeePaid) {
+            res.status(400);
+            throw new Error('Fee is not paid yet');
+        }
+        */
+
+        await nftService.updateNft(
+            { isStaked: false, stakingDaysLeft: 50 },
+            queriedNft.mint
+        );
+
+        res.json({ unstaked: true });
+    } catch (err) {
+        logger.error(
+            `Couldn't unstake nft: '${req.params.mint}' for user: '${req.userInfo.username}'`
+        );
+        next(err);
+    }
+});
+
 nftRoutes.use(
     rateLimit({
         windowMs: 60 * 1000, // 1 minute duration in milliseconds
@@ -127,7 +263,11 @@ nftRoutes.post(
                         // If it's stored in db for other user change ownership
                         if (existingNft.UserWallet !== userWallet) {
                             const updatedNft = await nftService.updateNft(
-                                { UserWallet: userWallet },
+                                {
+                                    UserWallet: userWallet,
+                                    isStaked: false,
+                                    claimableStakingRewards: 0,
+                                },
                                 nfts[i].mint
                             );
                             newNfts.push(updatedNft);
@@ -147,7 +287,11 @@ nftRoutes.post(
             // Remove those nfts from user that are not owned anymore
             for (let j = 0; j < queriedNfts.length; j++) {
                 const updatedNft = await nftService.updateNft(
-                    { UserWallet: null },
+                    {
+                        UserWallet: null,
+                        isStaked: false,
+                        claimableStakingRewards: 0,
+                    },
                     queriedNfts[j].mint
                 );
             }
@@ -188,7 +332,11 @@ nftRoutes.get(
                 !isOwner
             ) {
                 storedNft = await nftService.updateNft(
-                    { UserWallet: null },
+                    {
+                        UserWallet: null,
+                        isStaked: false,
+                        claimableStakingRewards: 0,
+                    },
                     storedNft.mint
                 );
             }

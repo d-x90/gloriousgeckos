@@ -34,7 +34,14 @@ gameService.startGame = async ({ nftMint, secondaries, wallet, config }) => {
         );
 
         if (!isNftOwned) {
-            await nftService.updateNft({ UserWallet: null }, nft.mint);
+            await nftService.updateNft(
+                {
+                    UserWallet: null,
+                    isStaked: false,
+                    claimableStakingRewards: 0,
+                },
+                nft.mint
+            );
             throw new Error(`NFT is not valid (${nft.mint})`);
         }
 
@@ -110,7 +117,14 @@ gameService.finishGame = async ({ payload, wallet }) => {
                 wallet
             );
             if (nft.UserWallet === wallet) {
-                await nftService.updateNft({ UserWallet: null }, nft.mint);
+                await nftService.updateNft(
+                    {
+                        UserWallet: null,
+                        isStaked: false,
+                        claimableStakingRewards: 0,
+                    },
+                    nft.mint
+                );
             }
             throw new Error(
                 'One of the nfts is not owned at the end of the game'

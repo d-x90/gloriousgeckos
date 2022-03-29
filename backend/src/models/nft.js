@@ -34,6 +34,22 @@ const Nft = sequelize.define(
             type: DataTypes.STRING,
             defaultValue: null,
         },
+        isStaked: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        stakingDaysLeft: {
+            type: DataTypes.INTEGER,
+            defaultValue: 50,
+        },
+        claimableStakingRewards: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
+        claimedStakingRewards: {
+            type: DataTypes.INTEGER,
+            defaultValue: 0,
+        },
     },
     {
         freezeTableName: true,

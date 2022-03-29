@@ -37,6 +37,7 @@ const ModalOverlay = styled('div')(() => ({
   '.MuiPaper-root': {
     pointerEvents: 'all',
     padding: '24px',
+    maxWidth: '620px',
     h1: {
       marginTop: '0',
     },

@@ -47,6 +47,8 @@ const Dashboard = () => {
     setNfts,
     checkIfNftIsUsable,
     reviveNft,
+    stakeNft,
+    unstakeNft,
     checkForNewNfts,
   } = useNft();
   const navigate = useNavigate();
@@ -89,58 +91,169 @@ const Dashboard = () => {
             nft={nft}
           />
         ))}
-        {isLoading ? 'Loading playable NFTs...' : null}
-        {nfts.length === 0 && !isLoading ? 'You have no playable NFT' : null}
+        {isLoading ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              color: 'white',
+              fontSize: '30px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            Loading playable NFTs...
+          </span>
+        ) : null}
+        {nfts.length === 0 && !isLoading ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              color: 'white',
+              fontSize: '30px',
+              transform: 'translateX(-50%)',
+            }}
+          >
+            You have no playable NFTs
+          </span>
+        ) : null}
       </StyledNftContainer>
 
       <div className="buttons">
-        <Button
-          variant="contained"
-          disabled={!selectedNft || selectedNft?.isDead}
-          onClick={startPlaying}
-        >
-          Play
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={async () => {
-            if (!selectedNft) {
-              return;
-            }
-
-            const { isAccepted } = await showModal(
-              'Reviving an NFT costs 1 revive potion!'
-            );
-
-            if (!isAccepted) {
-              return;
-            }
-
-            try {
-              const response = await reviveNft(selectedNft.mint);
-              if (response.revived) {
-                toast.success('Successful revival');
-                setNfts(
-                  nfts.map((nft) =>
-                    nft.mint === selectedNft.mint
-                      ? { ...nft, isDead: false }
-                      : nft
-                  )
-                );
-                selectNft(null);
-                refreshUser();
-              } else {
-                toast.error(response.response.data.message);
+        {selectedNft && !selectedNft.isDead && !selectedNft.isOnCooldown ? (
+          <Button
+            variant="contained"
+            disabled={!selectedNft || selectedNft?.isDead}
+            onClick={startPlaying}
+          >
+            Play
+          </Button>
+        ) : null}
+        {selectedNft && selectedNft.symbol === 'GG' && !selectedNft.isStaked ? (
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (!selectedNft) {
+                return;
               }
-            } catch (error) {
-              // @ts-ignore
-              toast.error('Something went wrong');
-            }
-          }}
-          disabled={!selectedNft?.isDead}
-        >
-          Revive
-        </Button>
+
+              const { isAccepted } = await showModal(
+                'You will get 100 $GLORY/day and a gecko egg that can be claimed after 50 days. If you list your gecko or transfer it to another wallet during staking your progress will be lost!'
+              );
+
+              if (!isAccepted) {
+                return;
+              }
+
+              try {
+                const response = await stakeNft(selectedNft.mint);
+                if (response.staked) {
+                  toast.success('Successfully staked');
+                  setNfts(
+                    nfts.map((nft) =>
+                      nft.mint === selectedNft.mint
+                        ? { ...nft, isStaked: true, stakingDaysLeft: 50 }
+                        : nft
+                    )
+                  );
+                  selectNft(null);
+                } else {
+                  toast.error(response.response.data.message);
+                }
+              } catch (error) {
+                // @ts-ignore
+                toast.error('Something went wrong');
+              }
+            }}
+          >
+            Stake
+          </Button>
+        ) : null}
+
+        {selectedNft && selectedNft.symbol === 'GG' && selectedNft.isStaked ? (
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (!selectedNft) {
+                return;
+              }
+
+              const { isAccepted } = await showModal(
+                'Your staking progress will be lost!'
+              );
+
+              if (!isAccepted) {
+                return;
+              }
+
+              try {
+                const response = await unstakeNft(selectedNft.mint);
+                if (response.unstaked) {
+                  toast.success('Successfully unstaked');
+                  setNfts(
+                    nfts.map((nft) =>
+                      nft.mint === selectedNft.mint
+                        ? { ...nft, isStaked: false, stakingDaysLeft: 50 }
+                        : nft
+                    )
+                  );
+                  selectNft(null);
+                } else {
+                  toast.error(response.response.data.message);
+                }
+              } catch (error) {
+                // @ts-ignore
+                toast.error('Something went wrong');
+              }
+            }}
+          >
+            Unstake
+          </Button>
+        ) : null}
+
+        {selectedNft && selectedNft.isDead ? (
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              if (!selectedNft) {
+                return;
+              }
+
+              const { isAccepted } = await showModal(
+                'Reviving an NFT costs 1 revive potion!'
+              );
+
+              if (!isAccepted) {
+                return;
+              }
+
+              try {
+                const response = await reviveNft(selectedNft.mint);
+                if (response.revived) {
+                  toast.success('Successful revival');
+                  setNfts(
+                    nfts.map((nft) =>
+                      nft.mint === selectedNft.mint
+                        ? { ...nft, isDead: false }
+                        : nft
+                    )
+                  );
+                  selectNft(null);
+                  refreshUser();
+                } else {
+                  toast.error(response.response.data.message);
+                }
+              } catch (error) {
+                // @ts-ignore
+                toast.error('Something went wrong');
+              }
+            }}
+          >
+            Revive
+          </Button>
+        ) : null}
         <Tooltip
           arrow
           placement="left"

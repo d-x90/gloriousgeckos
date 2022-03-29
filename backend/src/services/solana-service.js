@@ -5,6 +5,7 @@ const splToken = require('@solana/spl-token');
 const { SOLANA_NETWORK_NODE } = require('../config');
 const { Metadata } = require('@metaplex-foundation/mpl-token-metadata');
 var nacl = require('tweetnacl');
+const nftService = require('./nft-service');
 nacl.util = require('tweetnacl-util');
 
 const NFT_WHITELIST = {
@@ -19,8 +20,10 @@ const NFT_WHITELIST = {
     Gmyf7wsNP2VBV8FzjUmG3Jyux9yGLFghu5oDQ6Cozs6g: 'SKOLs_3',
     FMssZj67gVa7abFBhasAJnhUyFBrRmFuir2G16NMvfie: 'SKOLs_4',
     Ck6VvLL39w7Skq9TmWpbvx1dU2QtRCATV8SNru4awXrk: 'SKOLs_5',
+    '5hR59YBSRSF7nB61CabHiYjSkQWmLoCH2UMn81jsyNAT': 'HVH',
 };
 
+const ourWalletAddress = '5wDX8A9KE4AXdChseJ1LWkRrtekniNLZ1QY8BsMdKcyS';
 const ourTokenAccountForGlory = '';
 const ourTokenAccountForDust = '';
 const GLORY_TOKEN_MINT = '';
@@ -216,11 +219,45 @@ solanaService.verifyTokenTransfer = async (txSignature, wallet) => {
     }
 };
 
+solanaService.verifySolTransfer = async (txSignature, wallet) => {
+    const connection = getConnection();
+    try {
+        const response = await connection.connection.getParsedTransaction(
+            txSignature
+        );
+
+        const senderWallet =
+            response.transaction.message.instructions[0].parsed.info.source;
+        const destinationWallet =
+            response.transaction.message.instructions[0].parsed.info
+                .destination;
+        const amountSent =
+            response.transaction.message.instructions[0].parsed.info.lamports;
+
+        let verified = true;
+
+        if (senderWallet !== wallet) {
+            verified = false;
+        }
+
+        if (destinationWallet !== ourWalletAddress) {
+            verified = false;
+        }
+
+        return { verified, amountSent };
+    } catch (error) {
+        throw error;
+    } finally {
+        connection.isBeingUsed = false;
+    }
+};
+
 // CAUTION: lot of solana api calls..
 solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
     const connection = getConnection();
 
     try {
+        /*
         const accounts = await connection.connection.getParsedProgramAccounts(
             TOKEN_PROGRAM_ID,
             {
@@ -272,6 +309,30 @@ solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
                 await Promise.waitFor(250);
             }
         }
+
+        const nfts = nftResponses
+            .filter((nftResponse) => {
+                if (!nftResponse.data.creators) {
+                    return false;
+                }
+
+                return nftResponse.data.creators.some((x) =>
+                    Object.keys(NFT_WHITELIST).includes(x.address)
+                );
+            })
+            .map((nftResponse) => ({
+                mint: nftResponse.mint,
+                uri: nftResponse.data.uri,
+                symbol: nftResponse.data.symbol,
+            }));
+
+        return nfts;
+        */
+
+        const nftResponses = await Metadata.findDataByOwner(
+            connection.connection,
+            wallet
+        );
 
         const nfts = nftResponses
             .filter((nftResponse) => {

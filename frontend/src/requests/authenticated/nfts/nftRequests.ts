@@ -29,6 +29,34 @@ export const requestReviveNft = async (mint: string, jwt: string) => {
   return response.data;
 };
 
+export const requestStakeNft = async (mint: string, jwt: string) => {
+  const response = await axios.post<{ staked: boolean; message?: string }>(
+    `${basePath}/${mint}/stake`,
+    null,
+    {
+      headers: {
+        Authorization: 'Bearer ' + jwt,
+      },
+    }
+  );
+
+  return response.data;
+};
+
+export const requestUnstakeNft = async (mint: string, jwt: string) => {
+  const response = await axios.post<{ unstaked: boolean; message?: string }>(
+    `${basePath}/${mint}/unstake`,
+    null,
+    {
+      headers: {
+        Authorization: 'Bearer ' + jwt,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 const decorateNfts = async (nfts: NftDto[]) => {
   const decorationPromises = [];
   for (let i = 0; i < nfts.length; i++) {

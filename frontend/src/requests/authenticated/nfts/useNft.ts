@@ -5,6 +5,8 @@ import {
   getNfts,
   requestCheckForNewNfts,
   requestReviveNft,
+  requestStakeNft,
+  requestUnstakeNft,
   verifyNft,
 } from './nftRequests';
 
@@ -35,6 +37,10 @@ export type Nft = {
   metaDataUri: string | null;
   image: string;
   name: string;
+  isStaked: boolean;
+  stakingDaysLeft: number;
+  claimableStakingRewards: number;
+  claimedStakingRewards: number;
   attributes: Attribute[];
 };
 
@@ -77,6 +83,26 @@ const useNft = () => {
     [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
   );
 
+  const stakeNft = useCallback(
+    async (mint: string) => {
+      increaseLoadingCount(1);
+      const response = await authenticatedApiCall(requestStakeNft, mint);
+      decreaseLoadingCount(1);
+      return response;
+    },
+    [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
+  );
+
+  const unstakeNft = useCallback(
+    async (mint: string) => {
+      increaseLoadingCount(1);
+      const response = await authenticatedApiCall(requestUnstakeNft, mint);
+      decreaseLoadingCount(1);
+      return response;
+    },
+    [authenticatedApiCall, decreaseLoadingCount, increaseLoadingCount]
+  );
+
   useEffect(() => {
     (async () => {
       if (isAuthenticated) {
@@ -101,6 +127,8 @@ const useNft = () => {
     reviveNft,
     isLoading,
     checkForNewNfts,
+    stakeNft,
+    unstakeNft,
   };
 };
 

@@ -1,0 +1,9 @@
+{
+    "development": {
+        "username": "admin",
+        "password": "password",
+        "database": "ggeckos",
+        "host": "127.0.0.1",
+        "dialect": "postgres"
+    }
+}

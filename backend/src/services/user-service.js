@@ -168,4 +168,8 @@ userService.getAllUserWallet = async () => {
     return await User.findAll({ attributes: ['wallet'] });
 };
 
+userService.getAllUser = async () => {
+    return await User.findAll();
+};
+
 module.exports = userService;
