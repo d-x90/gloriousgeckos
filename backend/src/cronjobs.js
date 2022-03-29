@@ -60,6 +60,8 @@ if (process.argv[2] === 'weekly') {
             const nftsOfUser = await nftService.getNftsByWallet(wallet);
             const stakedGeckos = nftsOfUser.filter((nft) => nft.isStaked);
 
+            let gloryToAdd = 0;
+
             for (let j = 0; j < stakedGeckos.length; j++) {
                 try {
                     const stakedGecko = stakedGeckos[j];
@@ -87,6 +89,8 @@ if (process.argv[2] === 'weekly') {
                         console.log(
                             `Nft stake decremented for "${stakedGecko.mint}"`
                         );
+
+                        gloryToAdd += 100;
                     } else {
                         await nftService.updateNft(
                             {
@@ -96,10 +100,6 @@ if (process.argv[2] === 'weekly') {
                             },
                             stakedGecko.mint
                         );
-                        await userService.updateUser(
-                            { balance: user.balance + 100 },
-                            wallet
-                        );
                         console.log(
                             `Nft "${stakedGecko.mint}" has been taken from "${wallet}" `
                         );
@@ -108,6 +108,11 @@ if (process.argv[2] === 'weekly') {
                     console.error('Error happened in staking cronjob:', e);
                 }
             }
+
+            await userService.updateUser(
+                { balance: user.balance + gloryToAdd },
+                wallet
+            );
         }
     })();
 
