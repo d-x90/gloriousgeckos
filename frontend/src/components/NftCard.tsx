@@ -157,9 +157,7 @@ const NftCard: FC<{
               <p style={{ fontSize: '20px' }}>NFT is dead</p>
             ) : null}
             {nft.isOnCooldown ? (
-              <p style={{ fontSize: '20px' }}>
-                Playable in: {msToTime(cooldown)}
-              </p>
+              <p style={{ fontSize: '20px' }}>Will be refreshed at 00:00 UTC</p>
             ) : null}
           </>
         }
@@ -168,10 +166,6 @@ const NftCard: FC<{
           sx={{ width: 200, height: 250 }}
           onClick={(e: any) => {
             e.stopPropagation();
-
-            if (nft.isOnCooldown) {
-              return;
-            }
 
             onClick();
           }}

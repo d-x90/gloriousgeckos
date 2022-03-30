@@ -54,45 +54,51 @@ const StakingRewardCard: FC<{
       isDead={false}
       isOnCooldown={false}
     >
-      <Card
-        sx={{ width: 200, height: 270 }}
-        onClick={(e: any) => {
-          e.stopPropagation();
-
-          if (nft.isOnCooldown) {
-            return;
-          }
-
-          onClick();
-        }}
+      <Tooltip
+        arrow
+        placement="right"
+        title={<img width={100} height={100} src={nft.image} alt={nft.name} />}
       >
-        <CardActionArea>
-          <CardMedia
-            component="img"
-            height="200"
-            image={geckeggGif}
-            alt="geckegg"
-          />
+        <Card
+          sx={{ width: 200, height: 270 }}
+          onClick={(e: any) => {
+            e.stopPropagation();
 
-          <CardContent
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
-              {50 - nft.stakingDaysLeft}/50 days
-            </p>
-            <span
-              style={{ color: 'rgb(29,29,29)', margin: 0, fontSize: '16px' }}
+            if (nft.isOnCooldown) {
+              return;
+            }
+
+            onClick();
+          }}
+        >
+          <CardActionArea>
+            <CardMedia
+              component="img"
+              height="200"
+              image={geckeggGif}
+              alt="geckegg"
+            />
+
+            <CardContent
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
             >
-              {(50 - nft.stakingDaysLeft) * 100} $GLORY earned
-            </span>
-          </CardContent>
-        </CardActionArea>
-      </Card>
+              <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
+                {50 - nft.stakingDaysLeft}/50 days
+              </p>
+              <span
+                style={{ color: 'rgb(29,29,29)', margin: 0, fontSize: '16px' }}
+              >
+                {(50 - nft.stakingDaysLeft) * 100} $GLORY earned
+              </span>
+            </CardContent>
+          </CardActionArea>
+        </Card>
+      </Tooltip>
     </StyledStakingRewardCard>
   );
 };
