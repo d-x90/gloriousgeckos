@@ -129,7 +129,9 @@ const LeaderBoard = () => {
                   <TableCell component="th" scope="row">
                     {row.username}
                   </TableCell>
-                  <TableCell>{row.bestScore / 1000} sec</TableCell>
+                  <TableCell>
+                    {row.bestScore === null ? '-' : row.bestScore / 1000} sec
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
