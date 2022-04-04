@@ -26,11 +26,11 @@ gameRoutes.post('/start', authenticateJWT, async (req, res, next) => {
 gameRoutes.post('/finish', authenticateJWT, async (req, res, next) => {
     try {
         const { payload } = req.body;
-        const { isSuccess, gloryEarned } = await gameService.finishGame({
+        const { isSuccess, gloryEarned, time } = await gameService.finishGame({
             payload,
             wallet: req.userInfo.wallet,
         });
-        res.json({ isSuccess, gloryEarned });
+        res.json({ isSuccess, gloryEarned, time });
     } catch (err) {
         logger.error(`Error ending game for user: '${req.userInfo.username}'`);
         next(err);

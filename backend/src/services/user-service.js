@@ -172,4 +172,12 @@ userService.getAllUser = async () => {
     return await User.findAll();
 };
 
+userService.getLeaderboard = async () => {
+    return await User.findAll({
+        where: { isSignedUp: true },
+        attributes: ['username', 'bestScore'],
+        order: [['bestScore', 'ASC']],
+    });
+};
+
 module.exports = userService;

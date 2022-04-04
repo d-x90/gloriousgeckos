@@ -1,10 +1,21 @@
 // @ts-nocheck
 
 import { Metadata } from '@metaplex-foundation/mpl-token-metadata';
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import {
+  clusterApiUrl,
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
+import { toast } from 'react-toastify';
 
 // Connect to cluster
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
+
+const GGWallet = '5wDX8A9KE4AXdChseJ1LWkRrtekniNLZ1QY8BsMdKcyS';
 
 const NFT_WHITELIST = {
   F9xNaaCgUrznEkRABCrsyvVjCvMgnCTniqDRCfAw4h4V: 'GloriousGeckos',
@@ -52,3 +63,50 @@ export const getUsableNfts = async (wallet: string) => {
 
   return nfts;
 };
+
+export async function setPayerAndBlockhashTransaction(
+  publicKey: PublicKey,
+  instructions: TransactionInstruction[]
+) {
+  const transaction = new Transaction();
+  instructions.forEach((element) => {
+    transaction.add(element);
+  });
+  transaction.feePayer = publicKey;
+  const hash = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = hash.blockhash;
+  return transaction;
+}
+
+export async function sendSolToWallet(wallet: WalletContextState, sol: number) {
+  if (!wallet.connected) {
+    toast.error('Wallet not connected');
+    return null;
+  }
+
+  const transferSol = SystemProgram.transfer({
+    fromPubkey: wallet.publicKey,
+    toPubkey: new PublicKey(GGWallet),
+    lamports: LAMPORTS_PER_SOL * sol,
+  });
+
+  let transaction = await setPayerAndBlockhashTransaction(wallet.publicKey, [
+    transferSol,
+  ]);
+
+  let signature;
+  try {
+    signature = await wallet.sendTransaction(transaction);
+  } catch (e) {
+    return null;
+  }
+
+  toast.info('Transaction sent..');
+  toast.info('Waiting..');
+
+  await connection.confirmTransaction(signature);
+
+  toast.info('Transaction successfull');
+
+  return signature;
+}

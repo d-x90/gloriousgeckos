@@ -9,6 +9,8 @@ export type User = {
   inventory: {
     revivePotion: number;
   };
+  isSignedUp: boolean;
+  bestScore: number;
 };
 
 export const getOwnUser = async (jwt: string) => {

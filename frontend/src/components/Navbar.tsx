@@ -10,6 +10,7 @@ import { useModal } from '../contexts/modalContext';
 import { buyRevivePotion } from '../requests/authenticated/storeRequests';
 import HomeIcon from '@mui/icons-material/Home';
 import EggIcon from '@mui/icons-material/Egg';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 
 const StyledNavbar = styled('div')(() => ({
   display: 'flex',
@@ -94,6 +95,11 @@ const Navbar = () => {
             <Link to="/staking">
               <Tooltip title="Staking" placement="right" arrow>
                 <EggIcon />
+              </Tooltip>
+            </Link>
+            <Link to="/leaderboard">
+              <Tooltip title="Leaderboard" placement="right" arrow>
+                <LeaderboardIcon />
               </Tooltip>
             </Link>
           </>

@@ -48,6 +48,15 @@ const User = sequelize.define(
             allowNull: false,
             defaultValue: 0,
         },
+        bestScore: {
+            type: DataTypes.BIGINT,
+            allowNull: true,
+        },
+        isSignedUp: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
     },
     {
         freezeTableName: true,

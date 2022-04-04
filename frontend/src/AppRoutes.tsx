@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import StakingRewardCard from './components/StakingRewardCard';
 import { useAuth } from './contexts/authContext';
 import Dashboard from './pages/Dashboard';
 import Game from './pages/Game';
 import Info from './pages/info';
+import LeaderBoard from './pages/LeaderBoard';
 import Login from './pages/login';
 import PasswordReset from './pages/PasswordReset';
 import Register from './pages/register';
@@ -16,6 +16,9 @@ const AppRoutes = () => {
     <Routes>
       {isAuthenticated && <Route path="/" element={<Dashboard />} />}
       {isAuthenticated && <Route path="/game" element={<Game />} />}
+      {isAuthenticated && (
+        <Route path="/leaderboard" element={<LeaderBoard />} />
+      )}
       {isAuthenticated && (
         <Route path="/staking" element={<StakingRewards />} />
       )}
@@ -30,9 +33,5 @@ const AppRoutes = () => {
     </Routes>
   );
 };
-
-function Lootboxes() {
-  return <h2>Lootboxes</h2>;
-}
 
 export default AppRoutes;

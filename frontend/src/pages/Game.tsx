@@ -119,6 +119,12 @@ const Game = () => {
           if (response.isSuccess) {
             toast.success('Result submitted successfully');
             toast.success(`${response.gloryEarned} $GLORY earned`);
+            if (response.time !== '0') {
+              try {
+                let time = Number(response.time.split('.')[0]) / 1000;
+                toast.success(`Time: ${time} sec`);
+              } catch (e) {}
+            }
           } else {
             toast.error(response.response.data.message);
           }

@@ -75,12 +75,13 @@ gameService.finishGame = async ({ payload, wallet }) => {
         throw new Error('Invalid payload');
     }
 
-    let providedScore, providedDidDie, providedHash;
+    let providedScore, providedDidDie, providedHash, providedTime;
     try {
-        const { score, didDie, hash } = decodedPayload;
+        const { score, didDie, hash, time } = decodedPayload;
         providedScore = score;
         providedDidDie = didDie;
         providedHash = hash;
+        providedTime = time;
     } catch (err) {
         throw new Error('Incorrect payload structure');
     }
@@ -154,13 +155,27 @@ gameService.finishGame = async ({ payload, wallet }) => {
         await Promise.waitFor(250);
     }
 
-    // TODO: remove items used or remove them at start? iteration 2
-    await userService.updateUser(
-        { balance: user.balance + allGloryEarned, currentGameConfig: null },
-        user.wallet
-    );
+    let userUpdate = {
+        balance: user.balance + allGloryEarned,
+        currentGameConfig: null,
+    };
 
-    return { isSuccess: true, gloryEarned: allGloryEarned };
+    if (user.isSignedUp) {
+        try {
+            let currentTime = Number(providedTime.split('.')[0]);
+
+            if (user.bestScore === null || user.bestScore === 0) {
+                userUpdate.bestScore = currentTime;
+            } else if (currentTime < user.bestScore) {
+                userUpdate.bestScore = currentTime;
+            }
+        } catch (e) {}
+    }
+
+    // TODO: remove items used or remove them at start? iteration 2
+    await userService.updateUser(userUpdate, user.wallet);
+
+    return { isSuccess: true, gloryEarned: allGloryEarned, time: providedTime };
 };
 
 module.exports = gameService;

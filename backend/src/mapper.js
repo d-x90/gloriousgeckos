@@ -14,6 +14,8 @@ mapper.mapUserToUserDto = (user) => {
         balance: user.balance,
         inventory: mapper.InventoryToInventoryDto(user.Inventory),
         createdAt: user.createdAt,
+        bestScore: user.bestScore,
+        isSignedUp: user.isSignedUp,
     };
 };
 
