@@ -35,12 +35,7 @@ const LeaderBoard = () => {
       try {
         increaseLoadingCount(1);
         const response = await getLeaderBoard();
-        const mock = [...response.leaderboard];
-        for (let i = 0; i < 200; i++) {
-          mock.push({ username: 'asd', bestScore: 10000 });
-        }
-        // @ts-ignore
-        setLeaderboard(mock);
+        setLeaderboard(response.leaderboard);
       } catch (e) {
         toast.error('Something went wrong.');
       } finally {
