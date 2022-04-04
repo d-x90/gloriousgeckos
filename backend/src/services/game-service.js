@@ -160,7 +160,7 @@ gameService.finishGame = async ({ payload, wallet }) => {
         currentGameConfig: null,
     };
 
-    if (user.isSignedUp) {
+    if (user.isSignedUp && !providedDidDie) {
         try {
             let currentTime = Number(providedTime.split('.')[0]);
 
