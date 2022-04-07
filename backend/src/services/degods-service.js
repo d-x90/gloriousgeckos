@@ -12,8 +12,8 @@ degodsService.getStakedNfts = async (wallet) => {
 
     return degodsStakingInfo.gems.map((gem) => ({
         mint: gem.mint,
-        metaDataUri: gem.onchainMetadata.data.uri,
-        symbol: gem.onchainMetadata.data.symbol,
+        metaDataUri: 'degods..',
+        symbol: gem.externalMetadata.symbol,
         UserWallet: wallet,
     }));
 };
