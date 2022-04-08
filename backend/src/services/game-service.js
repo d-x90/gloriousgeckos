@@ -169,7 +169,9 @@ gameService.finishGame = async ({ payload, wallet }) => {
             } else if (currentTime < user.bestScore) {
                 userUpdate.bestScore = currentTime;
             }
-        } catch (e) {}
+        } catch (e) {
+            logger.error(e);
+        }
     }
 
     // TODO: remove items used or remove them at start? iteration 2
