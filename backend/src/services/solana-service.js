@@ -219,7 +219,11 @@ solanaService.verifyTokenTransfer = async (txSignature, wallet) => {
     }
 };
 
-solanaService.verifySolTransfer = async (txSignature, wallet) => {
+solanaService.verifySolTransfer = async (txSignature, wallet, tryCount = 0) => {
+    if (tryCount > 20) {
+        return { verified: false };
+    }
+
     const connection = getConnection();
     try {
         const response = await connection.connection.getParsedTransaction(
@@ -253,7 +257,11 @@ solanaService.verifySolTransfer = async (txSignature, wallet) => {
         return new Promise((resolve, reject) => {
             setTimeout(async () => {
                 resolve(
-                    await solanaService.verifySolTransfer(txSignature, wallet)
+                    await solanaService.verifySolTransfer(
+                        txSignature,
+                        wallet,
+                        tryCount + 1
+                    )
                 );
             }, 1500);
         });
