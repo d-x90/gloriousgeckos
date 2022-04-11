@@ -226,6 +226,10 @@ solanaService.verifySolTransfer = async (txSignature, wallet) => {
             txSignature
         );
 
+        if (response.meta.err) {
+            console.error(response.meta.err);
+        }
+
         const senderWallet =
             response.transaction.message.instructions[0].parsed.info.source;
         const destinationWallet =
@@ -246,7 +250,13 @@ solanaService.verifySolTransfer = async (txSignature, wallet) => {
 
         return { verified, amountSent };
     } catch (error) {
-        throw error;
+        return new Promise((resolve, reject) => {
+            setTimeout(async () => {
+                resolve(
+                    await solanaService.verifySolTransfer(txSignature, wallet)
+                );
+            }, 1500);
+        });
     } finally {
         connection.isBeingUsed = false;
     }

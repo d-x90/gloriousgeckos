@@ -97,11 +97,13 @@ const Navbar = () => {
                 <EggIcon />
               </Tooltip>
             </Link>
+            {/*
             <Link to="/leaderboard">
               <Tooltip title="Leaderboard" placement="right" arrow>
                 <LeaderboardIcon />
               </Tooltip>
             </Link>
+            */}
           </>
         ) : (
           <>
