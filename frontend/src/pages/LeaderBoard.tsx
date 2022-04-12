@@ -130,7 +130,7 @@ const LeaderBoard = () => {
                     {row.username}
                   </TableCell>
                   <TableCell>
-                    {row.bestScore === null ? '-' : row.bestScore / 1000} sec
+                    {row.bestScore === null ? '-' : row.bestScore / 1000}
                   </TableCell>
                 </TableRow>
               ))}
@@ -138,7 +138,7 @@ const LeaderBoard = () => {
           </Table>
         </TableContainer>
       </div>
-      <Button
+      {/*<Button
         onClick={onSignUp}
         disabled={user?.isSignedUp}
         variant="contained"
@@ -146,6 +146,7 @@ const LeaderBoard = () => {
       >
         {user?.isSignedUp ? 'Signed up!' : 'Sign up for contest'}
       </Button>
+      */}
     </div>
   );
 };

@@ -16,9 +16,9 @@ const AppRoutes = () => {
     <Routes>
       {isAuthenticated && <Route path="/" element={<Dashboard />} />}
       {isAuthenticated && <Route path="/game" element={<Game />} />}
-      {/*isAuthenticated && (
+      {isAuthenticated && (
         <Route path="/leaderboard" element={<LeaderBoard />} />
-      )*/}
+      )}
       {isAuthenticated && (
         <Route path="/staking" element={<StakingRewards />} />
       )}
