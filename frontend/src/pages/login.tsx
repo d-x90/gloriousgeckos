@@ -7,6 +7,7 @@ import { GeneralPageStyle } from '../GeneralStyles';
 import { login } from '../requests/authRequests';
 import bgImage from '../assets/images/blurry-gradient-haikei.svg';
 import { useLoading } from '../contexts/loadingContext';
+import nftCalendar from '../assets/images/black_and_white_transparent_version.svg';
 
 const StyledLogin = styled(GeneralPageStyle)(() => ({
   backgroundImage: `url(${bgImage})`,
@@ -99,6 +100,20 @@ const Login = () => {
         <Link style={{ marginLeft: '4px' }} to="/password-reset">
           Forgot password?
         </Link>
+      </div>
+      <div>
+        <a
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 12,
+          }}
+          target="_blank"
+          rel="noreferrer"
+          href="https://nftcalendar.io/event/roadmap-20-drop-glorious-geckos/"
+        >
+          <img height={100} width={100} src={nftCalendar} alt="nft calendar" />
+        </a>
       </div>
     </StyledLogin>
   );
