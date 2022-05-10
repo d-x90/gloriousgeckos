@@ -23,6 +23,8 @@ const NFT_WHITELIST = {
     '5hR59YBSRSF7nB61CabHiYjSkQWmLoCH2UMn81jsyNAT': 'HVH',
 };
 
+const NFT_HASHLIST = ['FXZHsq11bVTwPj2ezWzW5fecr2p1HHwv5gAoiTuBrZuW'];
+
 const ourWalletAddress = '5wDX8A9KE4AXdChseJ1LWkRrtekniNLZ1QY8BsMdKcyS';
 const ourTokenAccountForGlory = '';
 const ourTokenAccountForDust = '';
@@ -158,8 +160,10 @@ solanaService.verifyNftWhitelist = async (mint) => {
             metadataPDA
         );
 
-        return tokenMetadata.data.data.creators.some((x) =>
-            Object.keys(NFT_WHITELIST).includes(x.address)
+        return tokenMetadata.data.data.creators.some(
+            (x) =>
+                Object.keys(NFT_WHITELIST).includes(x.address) ||
+                NFT_HASHLIST.includes(x.address)
         );
     } catch (error) {
         throw error;
@@ -358,8 +362,10 @@ solanaService.getNfts = async (wallet, dontCheckTheseMints = []) => {
                     return false;
                 }
 
-                return nftResponse.data.creators.some((x) =>
-                    Object.keys(NFT_WHITELIST).includes(x.address)
+                return nftResponse.data.creators.some(
+                    (x) =>
+                        Object.keys(NFT_WHITELIST).includes(x.address) ||
+                        NFT_HASHLIST.includes(x.address)
                 );
             })
             .map((nftResponse) => ({
