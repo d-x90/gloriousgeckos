@@ -38,7 +38,7 @@ gameService.startGame = async ({ nftMint, secondaries, wallet, config }) => {
                 {
                     UserWallet: null,
                     isStaked: false,
-                    claimableStakingRewards: 0,
+                    stakingDaysLeft: 50,
                 },
                 nft.mint
             );
@@ -122,7 +122,7 @@ gameService.finishGame = async ({ payload, wallet }) => {
                     {
                         UserWallet: null,
                         isStaked: false,
-                        claimableStakingRewards: 0,
+                        stakingDaysLeft: 50,
                     },
                     nft.mint
                 );

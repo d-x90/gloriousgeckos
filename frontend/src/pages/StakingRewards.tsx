@@ -4,12 +4,16 @@ import { toast } from 'react-toastify';
 import NftCard from '../components/NftCard';
 import { useGlobal } from '../contexts/globalContext';
 import useNft from '../requests/authenticated/nfts/useNft';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useModal } from '../contexts/modalContext';
 import { useAuth } from '../contexts/authContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import StakingRewardCard from '../components/StakingRewardCard';
+import { sendSolToWallet } from '../solana/solanaService';
+import { useLoading } from '../contexts/loadingContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { claimStakingReward } from '../requests/authenticated/nfts/nftRequests';
 
 const StyledStakingRewards = styled('div')(() => ({
   width: '100vw',
@@ -46,7 +50,9 @@ const StakingRewards = () => {
   const navigate = useNavigate();
 
   const { selectedNft, selectNft, refreshUser } = useGlobal();
-  const { logOut } = useAuth();
+  const { increaseLoadingCount, decreaseLoadingCount } = useLoading();
+  const wallet = useWallet();
+  const { logOut, authenticatedApiCall } = useAuth();
 
   const { showModal } = useModal();
 
@@ -55,7 +61,47 @@ const StakingRewards = () => {
     refreshUser();
   }, [refreshUser, selectNft]);
 
-  const claim = async () => {};
+  const claim = useCallback(async () => {
+    try {
+      increaseLoadingCount(1);
+      const signature = await sendSolToWallet(wallet, 0.025);
+      decreaseLoadingCount(1);
+
+      if (!signature) {
+        return;
+      }
+
+      increaseLoadingCount(1);
+
+      const response = await authenticatedApiCall(
+        claimStakingReward,
+        signature,
+        selectedNft?.mint
+      );
+
+      if (response.success) {
+        toast.success('Claimed successfully');
+      } else {
+        toast.error('Please check the transaction if it was successfull');
+      }
+
+      if (selectedNft) {
+        selectedNft.stakingDaysLeft = 50;
+        selectedNft.isStaked = false;
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Please check the transaction if it was successfull');
+    } finally {
+      decreaseLoadingCount(1);
+    }
+  }, [
+    authenticatedApiCall,
+    decreaseLoadingCount,
+    increaseLoadingCount,
+    selectedNft,
+    wallet,
+  ]);
 
   return (
     <StyledStakingRewards>
@@ -85,7 +131,7 @@ const StakingRewards = () => {
               transform: 'translateX(-50%)',
             }}
           >
-            Loading staking rewards NFTs...
+            Loading staking reward NFTs...
           </span>
         ) : null}
         {nfts.length === 0 && !isLoading ? (
@@ -106,12 +152,11 @@ const StakingRewards = () => {
 
       <div className="buttons">
         {selectedNft ? (
-          <Button variant="contained" onClick={claim} disabled>
-            Hatch
-          </Button>
-        ) : null}
-        {selectedNft ? (
-          <Button variant="contained" onClick={claim} disabled>
+          <Button
+            variant="contained"
+            onClick={claim}
+            disabled={selectedNft.stakingDaysLeft !== 0}
+          >
             Claim
           </Button>
         ) : null}

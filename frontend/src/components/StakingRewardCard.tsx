@@ -12,6 +12,7 @@ import { Nft } from '../requests/authenticated/nfts/useNft';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import { useGlobal } from '../contexts/globalContext';
 import geckeggGif from '../assets/gifs/egg.webp';
+import tailGif from '../assets/gifs/tail_lower.gif';
 
 const StyledStakingRewardCard = styled('div', {
   shouldForwardProp: (prop) =>
@@ -75,7 +76,7 @@ const StakingRewardCard: FC<{
             <CardMedia
               component="img"
               height="200"
-              image={geckeggGif}
+              image={nft.stakingDaysLeft === 0 ? tailGif : geckeggGif}
               alt="geckegg"
             />
 
@@ -87,14 +88,26 @@ const StakingRewardCard: FC<{
                 alignItems: 'center',
               }}
             >
-              <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
-                {50 - nft.stakingDaysLeft}/50 days
-              </p>
-              <span
-                style={{ color: 'rgb(29,29,29)', margin: 0, fontSize: '16px' }}
-              >
-                {(50 - nft.stakingDaysLeft) * 100} $GLORY earned
-              </span>
+              {nft.stakingDaysLeft === 0 ? (
+                <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
+                  Nuclear Gecko Tail
+                </p>
+              ) : (
+                <>
+                  <p style={{ color: 'rgb(29,29,29)', margin: 0 }}>
+                    {50 - nft.stakingDaysLeft}/50 days
+                  </p>
+                  <span
+                    style={{
+                      color: 'rgb(29,29,29)',
+                      margin: 0,
+                      fontSize: '16px',
+                    }}
+                  >
+                    {(50 - nft.stakingDaysLeft) * 100} $GLORY earned
+                  </span>
+                </>
+              )}
             </CardContent>
           </CardActionArea>
         </Card>

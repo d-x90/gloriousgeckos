@@ -104,7 +104,7 @@ authService.register = async (newUser) => {
                 {
                     UserWallet: newUser.wallet,
                     isStaked: false,
-                    claimableStakingRewards: 0,
+                    stakingDaysLeft: 50,
                 },
                 nfts[i].mint
             );

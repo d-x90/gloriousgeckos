@@ -77,9 +77,7 @@ if (process.argv[2] === 'weekly') {
                         };
 
                         if (stakedGecko.stakingDaysLeft === 0) {
-                            modifiedFields.stakingDaysLeft = 50;
-                            modifiedFields.claimableStakingRewards =
-                                stakedGecko.claimableStakingRewards + 1;
+                            modifiedFields.stakingDaysLeft = 0;
                         }
 
                         await nftService.updateNft(

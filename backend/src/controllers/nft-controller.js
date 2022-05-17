@@ -216,6 +216,46 @@ nftRoutes.post('/:mint/unstake', authenticateJWT, async (req, res, next) => {
     }
 });
 
+nftRoutes.post('/claim-reward', authenticateJWT, async (req, res, next) => {
+    try {
+        const { signature, mint } = req.body;
+        const userWallet = req.userInfo.wallet;
+        const nft = await nftService.getNft(mint);
+
+        if (!nft.isStaked || nft.stakingDaysLeft > 0) {
+            return res.status(400).json({
+                success: false,
+                errorMessage: 'Reward cannot be claimed',
+            });
+        }
+
+        const { isFeePaid, errorMessage } =
+            await transactionService.validateSolTx(
+                signature,
+                userWallet,
+                0.025 * LAMPORTS_PER_SOL
+            );
+
+        if (!isFeePaid) {
+            return res.status(400).json({ success: false, errorMessage });
+        }
+
+        await nftService.updateNft(
+            {
+                isStaked: false,
+                stakingDaysLeft: 50,
+                claimableStakingRewards: nft.claimableStakingRewards + 1,
+            },
+            mint
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        logger.error(`Error claiming staking reward`);
+        next(err);
+    }
+});
+
 nftRoutes.use(
     rateLimit({
         windowMs: 60 * 1000, // 1 minute duration in milliseconds
@@ -266,7 +306,7 @@ nftRoutes.post(
                                 {
                                     UserWallet: userWallet,
                                     isStaked: false,
-                                    claimableStakingRewards: 0,
+                                    stakingDaysLeft: 50,
                                 },
                                 nfts[i].mint
                             );
@@ -290,7 +330,7 @@ nftRoutes.post(
                     {
                         UserWallet: null,
                         isStaked: false,
-                        claimableStakingRewards: 0,
+                        stakingDaysLeft: 50,
                     },
                     queriedNfts[j].mint
                 );
@@ -335,7 +375,7 @@ nftRoutes.get(
                     {
                         UserWallet: null,
                         isStaked: false,
-                        claimableStakingRewards: 0,
+                        stakingDaysLeft: 50,
                     },
                     storedNft.mint
                 );

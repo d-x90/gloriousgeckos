@@ -57,6 +57,23 @@ export const requestUnstakeNft = async (mint: string, jwt: string) => {
   return response.data;
 };
 
+export const claimStakingReward = async (
+  signature: string,
+  mint: string,
+  jwt: string
+) => {
+  const response = await axios.post<{ success: boolean; errorMessage: string }>(
+    `${basePath}/claim-reward`,
+    { signature, mint },
+    {
+      headers: {
+        Authorization: 'Bearer ' + jwt,
+      },
+    }
+  );
+  return response.data;
+};
+
 const decorateNfts = async (nfts: NftDto[]) => {
   const decorationPromises = [];
   for (let i = 0; i < nfts.length; i++) {
